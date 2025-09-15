@@ -207,6 +207,13 @@ const Map = () => {
           })
           .addTo(layerGroupRef.current);
       });
+
+    if (map) {
+      map.flyTo([20, 0], 2, {
+        animate: true,
+        duration: 2,
+      });
+    }
   }, [filter, isMapReady]);
 
   return (

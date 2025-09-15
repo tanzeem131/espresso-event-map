@@ -1,6 +1,5 @@
 /* General Component Layout */
 .map-view-container {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #0a0a0a;
   color: #ffffff;
   width: 100vw;
@@ -9,6 +8,10 @@
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
+}
+
+.leaflet-container.leaflet-touch-drag {
+  background: #262626;
 }
 
 .map-header {
@@ -60,6 +63,8 @@
   border-top: 3px solid #b67237;
   position: relative;
   background-color: #191a1a;
+  transition: all 0.5s ease;
+  will-change: transform;
 }
 
 /* Map Legend */
@@ -67,18 +72,24 @@
   position: absolute;
   bottom: 20px;
   left: 20px;
-  background: rgba(26, 26, 26, 0.95);
-  border: 2px solid #ff6b35;
+  background: #de9e67;
+  border: 2px solid #270903;
   border-radius: 12px;
   padding: 16px;
   z-index: 1000;
   backdrop-filter: blur(10px);
+  font-family: "PP Neue Montreal", regular;
 }
 
 .map-legend-title {
-  color: #ff6b35;
+  color: #270903;
   font-size: 1rem;
   margin: 0 0 12px 0;
+  font-family: "PP Neue Montreal", regular;
+  font-weight: 500;
+  padding: 2px;
+  border-radius: 20px;
+  border: 2px solid #270903;
 }
 
 .map-legend-item {
@@ -86,8 +97,11 @@
   align-items: center;
   cursor: pointer;
   margin-bottom: 8px;
+  font-weight: 450;
   font-size: 0.9rem;
   padding: 4px;
+  font-family: "PP Neue Montreal", regular;
+  color: #451f17;
 }
 
 .map-legend-item:hover {
@@ -96,13 +110,17 @@
 }
 
 .map-legend-item.active {
-  background-color: rgba(255, 107, 53, 0.3);
+  background-color: #b67237;
   border-radius: 20px;
 }
 
+.leaflet-map-pane,
+.leaflet-tile-pane {
+  will-change: transform;
+}
 /* Style for the 'All Events' marker in the legend */
 .legend-marker.all {
-  background: linear-gradient(135deg, #666, #f7931e);
+  background: linear-gradient(135deg, #f0e89d, #ff792e);
 }
 
 .map-legend-item:last-child {
@@ -114,34 +132,31 @@
   height: 16px;
   border-radius: 50%;
   margin-right: 10px;
-  border: 2px solid #fff;
+  border: 2px solid #270903;
 }
 
 .legend-marker.past {
-  background: #666;
+  background: #f0e89d;
 }
 
 .legend-marker.upcoming {
-  background: #f7931e;
-  box-shadow: 0 0 10px rgba(247, 147, 30, 0.5);
+  background: #ff792e;
 }
 
 /* Custom Map Markers */
 .marker-pin {
   width: 20px;
   height: 20px;
-  border: 3px solid #fff;
+  border: 1px solid #ffffff;
   border-radius: 50%;
 }
 
 .marker-pin.past {
-  background: #666;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #f0e89d;
 }
 
 .marker-pin.upcoming {
-  background: #f7931e;
-  box-shadow: 0 2px 8px rgba(247, 147, 30, 0.4);
+  background: #ff792e;
   animation: pulse 2s infinite;
 }
 
@@ -166,26 +181,29 @@
   color: #ffffff;
   border: 2px solid #ff6b35;
   max-width: 280px;
-  font-family: inherit;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .custom-popup .popup-title {
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #ff6b35;
   margin-bottom: 8px;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .custom-popup .popup-date {
   font-size: 0.9rem;
   color: #f7931e;
   margin-bottom: 8px;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .custom-popup .popup-description {
   font-size: 0.9rem;
   line-height: 1.4;
   margin-bottom: 12px;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .custom-popup .popup-status {
@@ -195,6 +213,7 @@
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .custom-popup .status-past {
