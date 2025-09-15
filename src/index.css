@@ -22,6 +22,34 @@ a:hover {
   color: #535bf2;
 }
 
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/ppneuemontreal-book.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/ppneuemontreal-medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/ppneuemontreal-bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/ppneuemontreal-italic.otf") format("opentype");
+  font-weight: normal;
+  font-style: italic;
+}
+
 body {
   margin: 0;
   display: flex;

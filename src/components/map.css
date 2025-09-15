@@ -3,7 +3,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #0a0a0a;
   color: #ffffff;
-
   width: 100vw;
   position: relative;
   left: 50%;
@@ -15,20 +14,44 @@
 .map-header {
   background: #b67237;
   padding: 20px;
-  text-align: center;
   box-shadow: 0 2px 20px rgba(255, 107, 53, 0.3);
+
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+
+.map-header-logo {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+}
+
+.map-header-content {
+  grid-column: span 10;
+  display: grid;
+  place-items: center;
+}
+
+.map-header img {
+  height: 60px;
+  display: block;
 }
 
 .map-header-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
+  font-size: 50px;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0 0 2px 0;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .map-header-subtitle {
-  font-size: 1.1rem;
-  opacity: 0.9;
+  font-size: 18px;
+  color: #270903;
   margin: 0;
+  font-family: "PP Neue Montreal", regular;
 }
 
 .map-container {
@@ -36,6 +59,7 @@
   width: 100%;
   border-top: 3px solid #b67237;
   position: relative;
+  background-color: #191a1a;
 }
 
 /* Map Legend */
@@ -60,8 +84,25 @@
 .map-legend-item {
   display: flex;
   align-items: center;
+  cursor: pointer;
   margin-bottom: 8px;
   font-size: 0.9rem;
+  padding: 4px;
+}
+
+.map-legend-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+
+.map-legend-item.active {
+  background-color: rgba(255, 107, 53, 0.3);
+  border-radius: 20px;
+}
+
+/* Style for the 'All Events' marker in the legend */
+.legend-marker.all {
+  background: linear-gradient(135deg, #666, #f7931e);
 }
 
 .map-legend-item:last-child {

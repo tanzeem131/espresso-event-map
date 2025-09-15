@@ -1,10 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./map.css";
 
 const Map = () => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const leafletLoadedRef = useRef(false);
+
+  const layerGroupRef = useRef(null);
+
+  // State to manage the current event filter
+  const [filter, setFilter] = useState("all");
+
+  const [isMapReady, setIsMapReady] = useState(false);
 
   const events = [
     {
@@ -98,14 +105,13 @@ const Map = () => {
     });
   };
 
+  // Effect for initializing the map (runs only once)
   useEffect(() => {
     let mounted = true;
-
     const initializeMap = async () => {
       try {
         const L = await loadLeaflet();
         if (!mounted || !mapRef.current || mapInstanceRef.current) return;
-
         const map = L.map(mapRef.current, {
           center: [20, 0],
           zoom: 2,
@@ -113,7 +119,6 @@ const Map = () => {
           scrollWheelZoom: true,
         });
         mapInstanceRef.current = map;
-
         L.tileLayer(
           "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
           {
@@ -124,25 +129,53 @@ const Map = () => {
           }
         ).addTo(map);
 
-        const pastEventIcon = L.divIcon({
-          className: "custom-leaflet-icon",
-          html: `<div class="marker-pin past"></div>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        });
+        // Initialize the layer group and add it to the map
+        layerGroupRef.current = L.layerGroup().addTo(map);
+        setIsMapReady(true);
+      } catch (error) {
+        console.error("Failed to load Leaflet:", error);
+      }
+    };
+    initializeMap();
+    return () => {
+      mounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
 
-        const upcomingEventIcon = L.divIcon({
-          className: "custom-leaflet-icon",
-          html: `<div class="marker-pin upcoming"></div>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        });
+  // Effect for updating markers when the filter changes
+  useEffect(() => {
+    if (!isMapReady || !layerGroupRef.current || !window.L) return;
 
-        events.forEach((event) => {
-          const icon =
-            event.status === "past" ? pastEventIcon : upcomingEventIcon;
+    // Clear previous markers
+    layerGroupRef.current.clearLayers();
 
-          const popupContent = `
+    const L = window.L;
+
+    // Define icons
+    const pastEventIcon = L.divIcon({
+      className: "custom-leaflet-icon",
+      html: `<div class="marker-pin past"></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+    const upcomingEventIcon = L.divIcon({
+      className: "custom-leaflet-icon",
+      html: `<div class="marker-pin upcoming"></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+
+    // Filter events and add markers to the layer group
+    events
+      .filter((event) => filter === "all" || event.status === filter)
+      .forEach((event) => {
+        const icon =
+          event.status === "past" ? pastEventIcon : upcomingEventIcon;
+        const popupContent = `
             <div class="popup-content">
               <div class="popup-title">${event.name}</div>
               <div class="popup-date">📅 ${event.date}</div>
@@ -156,50 +189,56 @@ const Map = () => {
               </div>
             </div>
           `;
-
-          L.marker([event.lat, event.lng], { icon })
-            .addTo(map)
-            .bindPopup(popupContent, {
-              className: "custom-popup",
-              maxWidth: 300,
-              closeButton: true,
-            });
-        });
-      } catch (error) {
-        console.error("Failed to load Leaflet:", error);
-      }
-    };
-
-    initializeMap();
-
-    return () => {
-      mounted = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
+        L.marker([event.lat, event.lng], { icon })
+          .bindPopup(popupContent, {
+            className: "custom-popup",
+            maxWidth: 300,
+            closeButton: true,
+          })
+          .addTo(layerGroupRef.current);
+      });
+  }, [filter, isMapReady]);
 
   return (
     <div className="map-view-container">
       <div className="map-header">
-        <h1 className="map-header-title">Espresso World Events</h1>
-        <p className="map-header-subtitle">
-          Discover where we've been and where we're heading next
-        </p>
+        <div className="map-header-logo">
+          <img src="/Espresso-Logo.png" />
+        </div>
+        <div className="map-header-content">
+          <h1 className="map-header-title">Espresso World Events</h1>
+          <p className="map-header-subtitle">
+            Discover where we've been and where we're heading next
+          </p>
+        </div>
       </div>
 
       <div className="map-container">
         <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
 
         <div className="map-legend">
-          <h3 className="map-legend-title">Event Status</h3>
-          <div className="map-legend-item">
+          <h3 className="map-legend-title">Filter Events</h3>
+          {/* New "All Events" filter */}
+          <div
+            className={`map-legend-item ${filter === "all" ? "active" : ""}`}
+            onClick={() => setFilter("all")}
+          >
+            <div className="legend-marker all"></div>
+            All Events
+          </div>
+          <div
+            className={`map-legend-item ${filter === "past" ? "active" : ""}`}
+            onClick={() => setFilter("past")}
+          >
             <div className="legend-marker past"></div>
             Past Events
           </div>
-          <div className="map-legend-item">
+          <div
+            className={`map-legend-item ${
+              filter === "upcoming" ? "active" : ""
+            }`}
+            onClick={() => setFilter("upcoming")}
+          >
             <div className="legend-marker upcoming"></div>
             Upcoming Events
           </div>
