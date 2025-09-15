@@ -112,6 +112,7 @@ const Map = () => {
       try {
         const L = await loadLeaflet();
         if (!mounted || !mapRef.current || mapInstanceRef.current) return;
+
         const map = L.map(mapRef.current, {
           center: [20, 0],
           zoom: 2,
@@ -154,6 +155,7 @@ const Map = () => {
     layerGroupRef.current.clearLayers();
 
     const L = window.L;
+    const map = mapInstanceRef.current;
 
     // Define icons
     const pastEventIcon = L.divIcon({
@@ -194,6 +196,14 @@ const Map = () => {
             className: "custom-popup",
             maxWidth: 300,
             closeButton: true,
+          })
+          .on("click", () => {
+            if (map) {
+              map.flyTo([event.lat, event.lng], 13, {
+                animate: true,
+                duration: 2,
+              });
+            }
           })
           .addTo(layerGroupRef.current);
       });
