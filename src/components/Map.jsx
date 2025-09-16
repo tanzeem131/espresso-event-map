@@ -15,90 +15,75 @@ const Map = () => {
 
   const events = [
     {
-      name: "Espresso Summit 2024",
-      lat: 40.7128,
-      lng: -74.006,
-      location: "New York",
-      country: "USA",
-      date: "March 15, 2024",
-      description:
-        "Annual blockchain conference featuring the latest in zero-knowledge proofs and decentralized systems.",
+      name: "Espresso Brews WebX",
+      lat: 35.6586,
+      lng: 139.7486,
+      location: "Tera Cafe Shien Zojo ji, Tokyo, Japan",
+      // country: "Japan",
+      date: "August 26, 2025 10:00 am",
+      link: "https://www.espressosys.com/community",
+      description: "A special WebX brew event at Tera Cafe.",
       status: "past",
-      attendees: 500,
+      attendees: null,
     },
     {
-      name: "DeFi Privacy Workshop",
-      lat: 51.5074,
-      lng: -0.1278,
-      location: "London",
-      country: "UK",
-      date: "June 20, 2024",
+      name: "Ethereum 10Y Anniversary",
+      lat: 37.7825,
+      lng: -122.4099,
+      location: "Frontier Tower, 995 Market St, San Francisco, USA",
+      // country: "USA",
+      date: "July 30, 2025 4:00 pm",
+      link: "https://www.espressosys.com/community",
       description:
-        "Technical workshop on privacy-preserving DeFi protocols using Espresso's infrastructure.",
+        "Celebrating the 10-year anniversary of Ethereum in San Francisco.",
       status: "past",
-      attendees: 150,
+      attendees: null,
     },
     {
-      name: "Web3 Privacy Conference",
-      lat: 37.7749,
-      lng: -122.4194,
-      location: "San Francisco",
-      country: "USA",
-      date: "November 8, 2024",
+      name: "Brewing the Base Layer | Espresso Happy Hour 🍸",
+      lat: 37.5665,
+      lng: 126.978,
+      location: "Seoul, Korea",
+      // country: "Korea",
+      date: "September 20, 2025 4:00 pm",
+      link: "https://luma.com/e0u6mnoc",
       description:
-        "Exploring the future of privacy in Web3 applications and blockchain networks.",
+        "Espresso Systems invites you to come enjoy an Espresso martini while discovering what we’re brewing in the Ethereum L2 space.",
       status: "upcoming",
-      attendees: 300,
+      attendees: 222,
     },
     {
-      name: "European Blockchain Week",
-      lat: 52.52,
-      lng: 13.405,
-      location: "Berlin",
-      country: "Germany",
-      date: "December 12, 2024",
-      description:
-        "Join us at Europe's premier blockchain event to discuss scalable privacy solutions.",
+      name: "Espresso & Partner Brews | KBW",
+      lat: 37.5370666,
+      lng: 126.9991267,
+      location: "Seoul, Korea",
+      // country: "Korea",
+      date: "September 22, 2025 12:00 pm",
+      link: "https://luma.com/h9uxi7c1",
+      description: "Partner event at mtl cafe & bakery Hannam during KBW.",
       status: "upcoming",
-      attendees: 800,
+      attendees: null,
     },
     {
-      name: "Asian Crypto Summit",
-      lat: 35.6762,
-      lng: 139.6503,
-      location: "Tokyo",
-      country: "Japan",
-      date: "February 18, 2025",
-      description:
-        "Bringing zero-knowledge technology to the Asian market with local partners.",
+      name: "That's That Me Espresso | Karaoke Night 🎤",
+      lat: 36.5665,
+      lng: 125.978,
+      location: "Seoul, Korea",
+      // country: "Korea",
+      date: "September 25, 2025 8:00 pm",
+      link: "https://luma.com/z4vmc849",
+      description: "Espresso Karaoke Night event at KBW.",
       status: "upcoming",
-      attendees: 400,
-    },
-    {
-      name: "DevCon Privacy Track",
-      lat: -33.8688,
-      lng: 151.2093,
-      location: "Sydney",
-      country: "Australia",
-      date: "April 5, 2025",
-      description:
-        "Developer-focused sessions on implementing privacy features in dApps.",
-      status: "upcoming",
-      attendees: 200,
+      attendees: 612,
     },
   ];
 
   const icons = {
-    sun: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="4"></circle>
-      <path d="m12 2 0 2"></path>
-      <path d="m12 20 0 2"></path>
-      <path d="m4.93 4.93 1.41 1.41"></path>
-      <path d="m17.66 17.66 1.41 1.41"></path>
-      <path d="m2 12 2 0"></path>
-      <path d="m20 12 2 0"></path>
-      <path d="m6.34 17.66-1.41 1.41"></path>
-      <path d="m19.07 4.93-1.41 1.41"></path>
+    link: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" 
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 1-7 0 5 5 0 0 1 0-7 5 5 0 0 1 7 0"/>
+        <path d="M14 11a5 5 0 0 1 7 0 5 5 0 0 1 0 7 5 5 0 0 1-7 0"/>
+        <line x1="8" y1="16" x2="16" y2="8"></line>
     </svg>`,
 
     calendar: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -119,29 +104,9 @@ const Map = () => {
       <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
     </svg>`,
 
-    coffee: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8Z"></path>
-      <line x1="6" y1="1" x2="6" y2="4"></line>
-      <line x1="10" y1="1" x2="10" y2="4"></line>
-      <line x1="14" y1="1" x2="14" y2="4"></line>
-    </svg>`,
-
     close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="18" y1="6" x2="6" y2="18"></line>
       <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>`,
-
-    sunLarge: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="4"></circle>
-      <path d="m12 2 0 2"></path>
-      <path d="m12 20 0 2"></path>
-      <path d="m4.93 4.93 1.41 1.41"></path>
-      <path d="m17.66 17.66 1.41 1.41"></path>
-      <path d="m2 12 2 0"></path>
-      <path d="m20 12 2 0"></path>
-      <path d="m6.34 17.66-1.41 1.41"></path>
-      <path d="m19.07 4.93-1.41 1.41"></path>
     </svg>`,
   };
 
@@ -179,7 +144,7 @@ const Map = () => {
         const map = L.map(mapRef.current, {
           center: [20, 0],
           zoom: 2,
-          zoomControl: true,
+          zoomControl: false,
           scrollWheelZoom: true,
         });
         mapInstanceRef.current = map;
@@ -239,8 +204,8 @@ const Map = () => {
             <div class="popup-header">
               <div class="popup-icon"><img src="/ES-symbol.png" /></div>
               <div class="popup-header-text">
-                <div class="popup-title">${event.location}</div>
-                <div class="popup-country">${event.country}</div>
+                <div class="popup-title">${event.name}</div>
+                <div class="popup-country">${event.location}</div>
               </div>
               <div class="popup-close">${icons.close}</div>
             </div>
@@ -259,9 +224,13 @@ const Map = () => {
                 <div class="popup-description-icon">${icons.star}</div>
                 <div class="popup-description-text">${event.description}</div>
               </div>
-              <div class="popup-tagline">
-                <div class="popup-tagline-icon">${icons.coffee}</div>
-                <div class="popup-tagline-text">Espresso with skyline energy.</div>
+              <div class="popup-link">
+                <div class="popup-link-icon">${icons.link}</div>
+                <a href="${
+                  event.link
+                }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
+                Link
+                </a>
               </div>
               <div class="popup-status-badge status-${event.status}">
                 ${
@@ -313,10 +282,13 @@ const Map = () => {
           <img src="/Espresso-Logo.png" />
         </div>
         <div className="map-header-content">
-          <h1 className="map-header-title">Espresso World Events</h1>
-          <p className="map-header-subtitle">
+          <div className="map-header-title">Espresso World Events</div>
+          <div className="map-header-subtitle">
             Discover where we've been and where we're heading next
-          </p>
+          </div>
+        </div>
+        <div className="map-header-globe">
+          <img src="/Openess.png" />
         </div>
       </div>
 
