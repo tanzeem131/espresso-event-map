@@ -26,9 +26,10 @@
 }
 
 .map-header-logo {
-  grid-column: span 2;
+  grid-column: span 3;
   display: flex;
   justify-content: start;
+  margin-left: 20px;
 }
 
 .map-header-logo img {
@@ -48,7 +49,7 @@
 }
 
 .map-header-content {
-  grid-column: span 9;
+  grid-column: span 8;
   display: grid;
   place-items: center;
 }
@@ -72,7 +73,7 @@
 }
 
 .map-container {
-  height: 1000px;
+  height: 800px;
   width: 100%;
   position: relative;
   background-color: #191a1a;
@@ -83,7 +84,7 @@
 /* Map Legend */
 .map-legend {
   position: absolute;
-  top: 30%;
+  top: 1%;
   left: 20px;
   z-index: 1000;
   background: #270903;
@@ -223,27 +224,30 @@
   font-family: "PP Neue Montreal", regular;
   border-radius: 16px;
   overflow: hidden;
-  min-width: 300px;
+  min-width: 400px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .popup-header {
   background: #fcebde;
   color: white;
-  padding: 20px;
-  display: flex;
+  padding: 10px;
   align-items: center;
   gap: 12px;
   position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
 }
 
 .popup-icon {
   font-size: 24px;
-  flex-shrink: 0;
+  grid-column: span 2;
+  justify-self: start; /* align horizontally to start */
+  align-self: start; /* align vertically to top */
 }
 
 .popup-header-text {
-  flex: 1;
+  grid-column: span 10;
 }
 
 .popup-title {
@@ -283,7 +287,7 @@
 
 .popup-body {
   background: white;
-  padding: 20px;
+  padding: 10px;
   color: #333;
 }
 
@@ -294,11 +298,11 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .popup-date-section {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .popup-date-icon,
@@ -309,14 +313,14 @@
   font-family: "PP Neue Montreal", regular;
   flex-shrink: 0;
   width: 20px;
-  color: #4a9fd9;
+  color: #1eb6f8;
 }
 
 .popup-date {
   font-size: 18px;
   font-family: "PP Neue Montreal", regular;
   font-weight: 500;
-  color: #4a9fd9;
+  color: #1eb6f8;
   margin: 0;
 }
 
