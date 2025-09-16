@@ -16,13 +16,12 @@
 
 .map-header {
   background: #b67237;
-  padding: 20px;
-  box-shadow: 0 2px 20px rgba(255, 107, 53, 0.3);
-
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 32px;
 }
 
 .map-header-logo {
@@ -38,29 +37,31 @@
 }
 
 .map-header img {
-  height: 60px;
+  height: 70px;
   display: block;
 }
 
 .map-header-title {
-  font-size: 50px;
+  font-size: 48px;
   font-weight: 400;
-  color: #ffffff;
-  margin: 0 0 2px 0;
+  color: #fcebde;
+  margin: 0;
+  line-height: 1.1;
   font-family: "PP Neue Montreal", regular;
 }
 
 .map-header-subtitle {
-  font-size: 18px;
+  font-size: 16px;
+  margin-top: 8px;
   color: #270903;
-  margin: 0;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
   font-family: "PP Neue Montreal", regular;
 }
 
 .map-container {
-  height: 600px;
+  height: 800px;
   width: 100%;
-  border-top: 3px solid #b67237;
   position: relative;
   background-color: #191a1a;
   transition: all 0.5s ease;
@@ -70,94 +71,109 @@
 /* Map Legend */
 .map-legend {
   position: absolute;
-  bottom: 20px;
+  top: 50%;
   left: 20px;
-  background: #de9e67;
-  border: 2px solid #270903;
-  border-radius: 12px;
-  padding: 16px;
   z-index: 1000;
-  backdrop-filter: blur(10px);
+  background: #270903;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(252, 238, 203, 0.2);
+  padding: 12px;
   font-family: "PP Neue Montreal", regular;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-
 .map-legend-title {
-  color: #270903;
-  font-size: 1rem;
-  margin: 0 0 12px 0;
-  font-family: "PP Neue Montreal", regular;
+  font-size: 0.8rem;
   font-weight: 500;
-  padding: 2px;
-  border-radius: 20px;
-  border: 2px solid #270903;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(252, 238, 203, 0.7);
+  padding: 0 4px;
+  margin: 0 0 4px 0;
 }
 
 .map-legend-item {
   display: flex;
   align-items: center;
   cursor: pointer;
-  margin-bottom: 8px;
-  font-weight: 450;
-  font-size: 0.9rem;
-  padding: 4px;
-  font-family: "PP Neue Montreal", regular;
-  color: #451f17;
+  color: #fcebde;
+  font-size: 0.95rem;
+  font-weight: 400;
+  opacity: 0.8;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
 }
-
 .map-legend-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  background-color: rgba(252, 238, 203, 0.1);
+  opacity: 1;
 }
 
 .map-legend-item.active {
-  background-color: #b67237;
-  border-radius: 20px;
-}
-
-.leaflet-map-pane,
-.leaflet-tile-pane {
-  will-change: transform;
-}
-/* Style for the 'All Events' marker in the legend */
-.legend-marker.all {
-  background: linear-gradient(135deg, #f0e89d, #ff792e);
-}
-
-.map-legend-item:last-child {
-  margin-bottom: 0;
+  background-color: #de9e67;
+  color: #270903;
+  opacity: 1;
+  font-weight: 500;
 }
 
 .legend-marker {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 10px;
-  border: 2px solid #270903;
+  display: none;
 }
 
-.legend-marker.past {
-  background: #f0e89d;
+.marker-box {
+  position: relative;
+  padding: 6px 12px;
+  font-family: "PP Neue Montreal", regular;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-out;
 }
 
-.legend-marker.upcoming {
-  background: #ff792e;
+.marker-box:hover {
+  transform: scale(1.05);
+  z-index: 10;
 }
 
-/* Custom Map Markers */
-.marker-pin {
-  width: 20px;
-  height: 20px;
-  border: 1px solid #ffffff;
-  border-radius: 50%;
+.marker-box::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid;
 }
 
-.marker-pin.past {
-  background: #f0e89d;
+.marker-box.upcoming {
+  background-color: #de9e67;
+  color: #270903;
 }
 
-.marker-pin.upcoming {
-  background: #ff792e;
-  animation: pulse 2s infinite;
+.marker-box.upcoming::after {
+  border-top-color: #de9e67;
+}
+.marker-box.past {
+  background-color: #3d3d3d;
+  color: #e0e0e0;
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.marker-box.past::after {
+  border-top-color: #3d3d3d;
 }
 
 @keyframes pulse {
@@ -174,54 +190,159 @@
 }
 
 /* Custom Popups */
-.custom-popup .popup-content {
-  background: #1a1a1a;
-  border-radius: 12px;
-  padding: 16px;
-  color: #ffffff;
-  border: 2px solid #ff6b35;
-  max-width: 280px;
-  font-family: "PP Neue Montreal", regular;
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  background: transparent !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  bottom: -20px;
 }
 
-.custom-popup .popup-title {
-  font-size: 1.2rem;
-  font-weight: 400;
-  color: #ff6b35;
-  margin-bottom: 8px;
-  font-family: "PP Neue Montreal", regular;
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-.custom-popup .popup-date {
-  font-size: 0.9rem;
-  color: #f7931e;
-  margin-bottom: 8px;
-  font-family: "PP Neue Montreal", regular;
+.leaflet-popup-tip {
+  background: #b85c3e !important;
 }
 
-.custom-popup .popup-description {
-  font-size: 0.9rem;
-  line-height: 1.4;
+.popup-content {
+  font-family: "PP Neue Montreal", regular;
+  border-radius: 16px;
+  overflow: hidden;
+  min-width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.popup-header {
+  background: #fcebde;
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.popup-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.popup-header-text {
+  flex: 1;
+}
+
+.popup-title {
+  font-size: 28px;
+  font-family: "PP Neue Montreal", regular;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.1;
+  color: #1a1a1a;
+}
+
+.popup-country {
+  font-size: 18px;
+  font-family: "PP Neue Montreal", regular;
+  margin: 4px 0 0 0;
+  opacity: 0.9;
+  color: rgba(26, 26, 26, 0.8);
+}
+
+.popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #666;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-family: "PP Neue Montreal", regular;
+  cursor: pointer;
+  font-weight: 300;
+}
+
+.popup-body {
+  background: white;
+  padding: 20px;
+  color: #333;
+}
+
+.popup-date-section,
+.popup-attendees,
+.popup-description,
+.popup-tagline {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.popup-date-section {
   margin-bottom: 12px;
-  font-family: "PP Neue Montreal", regular;
 }
 
-.custom-popup .popup-status {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+.popup-date-icon,
+.popup-attendees-icon,
+.popup-description-icon,
+.popup-tagline-icon {
+  font-size: 16px;
+  font-family: "PP Neue Montreal", regular;
+  flex-shrink: 0;
+  width: 20px;
+  color: #4a9fd9;
+}
+
+.popup-date {
+  font-size: 18px;
+  font-family: "PP Neue Montreal", regular;
   font-weight: 500;
-  text-transform: uppercase;
+  color: #4a9fd9;
+  margin: 0;
+}
+
+.popup-attendees-text,
+.popup-description-text,
+.popup-tagline-text {
+  font-size: 16px;
   font-family: "PP Neue Montreal", regular;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
 }
 
-.custom-popup .status-past {
-  background: rgba(119, 119, 119, 0.2);
-  color: #777;
+.popup-attendees-text {
+  font-weight: 400;
 }
 
-.custom-popup .status-upcoming {
-  background: rgba(247, 147, 30, 0.2);
-  color: #f7931e;
+.popup-status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: "PP Neue Montreal", regular;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+}
+
+.popup-status-badge.status-upcoming {
+  background: #f5e6b3;
+  color: #8b6914;
+}
+
+.popup-status-badge.status-past {
+  background: #e5e5e5;
+  color: #666;
+}
+.leaflet-popup-close-button {
+  display: none !important;
 }
