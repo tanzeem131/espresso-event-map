@@ -50,15 +50,12 @@ const Map = () => {
           scrollWheelZoom: true,
         });
         mapInstanceRef.current = map;
-        L.tileLayer(
-          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-          {
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy;',
-            subdomains: "abcd",
-            maxZoom: 19,
-          }
-        ).addTo(map);
+
+        L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
 
         layerGroupRef.current = L.layerGroup().addTo(map);
         setIsMapReady(true);
@@ -130,10 +127,18 @@ const Map = () => {
                 Register
                 </a>
               </div>
-              <div class="popup-status-badge status-${event.status}">
-                ${
-                  event.status === "past" ? "COMPLETED EVENT" : "UPCOMING EVENT"
-                }
+              
+              <div class="popup-footer">
+                <div class="popup-status-badge status-${event.status}">
+                  ${
+                    event.status === "past"
+                      ? "COMPLETED EVENT"
+                      : "UPCOMING EVENT"
+                  }
+                </div>
+                <button class="popup-zoom-btn">
+                  Go to Location
+                </button>
               </div>
             </div>
           </div>
@@ -151,6 +156,18 @@ const Map = () => {
             if (closeBtn) {
               closeBtn.addEventListener("click", () => {
                 map.closePopup();
+              });
+            }
+
+            const zoomBtn = popupNode.querySelector(".popup-zoom-btn");
+            if (zoomBtn) {
+              zoomBtn.addEventListener("click", () => {
+                if (map) {
+                  map.flyTo([event.lat, event.lng], 16, {
+                    animate: true,
+                    duration: 2,
+                  });
+                }
               });
             }
           })

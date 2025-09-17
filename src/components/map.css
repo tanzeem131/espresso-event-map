@@ -15,8 +15,8 @@
 }
 
 .map-header {
-  background: #b67237;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+  background: #fcebde;
+  border-bottom: 2px solid #270903;
   padding: 10px;
   display: grid;
   justify-content: center;
@@ -38,26 +38,27 @@
 }
 
 .map-header-globe {
-  grid-column: span 1;
+  grid-column: span 3;
   display: flex;
-  justify-content: start;
+  justify-content: end;
 }
 
 .map-header-globe img {
   height: 100px;
   display: block;
+  transform: scaleX(-1);
 }
 
 .map-header-content {
-  grid-column: span 8;
+  grid-column: span 6;
   display: grid;
   place-items: center;
 }
 
 .map-header-title {
   font-size: 50px;
-  font-weight: 400;
-  color: #fcebde;
+  font-weight: 500;
+  color: #b67237;
   margin: 0;
   line-height: 1.1;
   font-family: "PP Neue Montreal", regular;
@@ -72,11 +73,59 @@
   font-family: "PP Neue Montreal", regular;
 }
 
+@media (max-width: 768px) {
+  .map-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+    position: relative;
+    gap: 10px;
+  }
+
+  .map-header-logo {
+    grid-column: auto;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .map-header-logo img {
+    height: 50px;
+  }
+
+  .map-header-content {
+    grid-column: auto;
+    place-items: center;
+    z-index: 2;
+  }
+
+  .map-header-title {
+    font-size: 32px;
+  }
+
+  .map-header-subtitle {
+    font-size: 16px;
+  }
+
+  .map-header-globe {
+    grid-column: auto;
+    justify-content: center;
+    position: absolute;
+    bottom: 1px;
+    left: 90%;
+    transform: translateX(-50%) scaleX(-1);
+    z-index: 1;
+    opacity: 0.3;
+  }
+
+  .map-header-globe img {
+    height: 150px;
+  }
+}
+
 .map-container {
   height: 800px;
   width: 100%;
   position: relative;
-  background-color: #191a1a;
+  background-color: #aad3df;
   transition: all 0.5s ease;
   will-change: transform;
 }
@@ -85,7 +134,7 @@
 .map-legend {
   position: absolute;
   top: 1%;
-  left: 20px;
+  left: 1%;
   z-index: 1000;
   background: #270903;
   backdrop-filter: blur(12px);
@@ -131,6 +180,25 @@
   color: #270903;
   opacity: 1;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .map-legend {
+    width: 160px;
+    padding: 10px;
+    gap: 6px;
+    left: 0.3%;
+    top: 0.3%;
+  }
+
+  .map-legend-title {
+    font-size: 0.7rem;
+  }
+
+  .map-legend-item {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
 }
 
 .legend-marker {
@@ -242,8 +310,8 @@
 .popup-icon {
   font-size: 24px;
   grid-column: span 2;
-  justify-self: start; /* align horizontally to start */
-  align-self: start; /* align vertically to top */
+  justify-self: start;
+  align-self: start;
 }
 
 .popup-header-text {
@@ -361,4 +429,30 @@
 }
 .leaflet-popup-close-button {
   display: none !important;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.popup-zoom-btn {
+  background-color: #fcebde;
+  color: #b67237;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.popup-zoom-btn:focus {
+  outline: none;
 }
