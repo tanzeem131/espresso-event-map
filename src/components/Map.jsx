@@ -4,6 +4,7 @@ import { icons } from "../utils/constants";
 import { getEventStatus } from "../utils/constants";
 import { formatReadableDate } from "../utils/constants";
 import { formatLocation } from "../utils/constants";
+import { EventListSkeleton } from "./EventListLoader";
 
 const Map = () => {
   const mapRef = useRef(null);
@@ -16,6 +17,13 @@ const Map = () => {
   const [sortBy, setSortBy] = useState("date");
   const [regionFilter, setRegionFilter] = useState("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
+  // Add loading states
+  const [isLoadingUpcoming, setIsLoadingUpcoming] = useState(true);
+  const [isLoadingPast, setIsLoadingPast] = useState(true);
+
+  // Combined loading state - true if either data source is still loading
+  const isLoading = isLoadingUpcoming || isLoadingPast;
 
   const [upcomingEventData, setUpcomingEventData] = useState();
   const [pastEventData, setPastEventData] = useState();
@@ -38,6 +46,7 @@ const Map = () => {
 
   const fetchDataUpcomingEvent = async () => {
     try {
+      setIsLoadingUpcoming(true);
       const res = await fetch(
         "/api/user/profile/events?username=usr-cAqsoa41hhkQxPs"
       );
@@ -48,7 +57,9 @@ const Map = () => {
       const resdata = await res.json();
       setUpcomingEventData(resdata);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching upcoming events:", error);
+    } finally {
+      setIsLoadingUpcoming(false);
     }
   };
 
@@ -56,10 +67,9 @@ const Map = () => {
     fetchDataUpcomingEvent();
   }, []);
 
-  console.log(upcomingEventData);
-
   const fetchDataPastEvent = async () => {
     try {
+      setIsLoadingPast(true);
       const res = await fetch(
         "/api/user/profile/events-hosting?pagination_cursor=evt-cqNTbzDjHZx4YJc&pagination_limit=40&period=past&user_api_id=usr-cAqsoa41hhkQxPs"
       );
@@ -69,7 +79,9 @@ const Map = () => {
       const resdata = await res.json();
       setPastEventData(resdata);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching past events:", error);
+    } finally {
+      setIsLoadingPast(false);
     }
   };
 
@@ -855,31 +867,41 @@ const Map = () => {
             </div>
           </div>
 
-          <div className="events-list">
-            {filteredEvents.map((event) => (
-              <div
-                key={event.id}
-                className="event-card"
-                onClick={() => handleEventCardClick(event)}
-              >
-                <div className="event-image">
-                  <img src={event.image} alt={event.title} />
-                </div>
-                <div className="event-content">
-                  <h4 className="event-title">{event.title}</h4>
-                  <div className="event-organizer">
-                    {/* <div className="organizer-avatars">{icons.location}</div> */}
-                    <div
-                      className="organizer-avatars"
-                      dangerouslySetInnerHTML={{ __html: icons.location }}
-                    ></div>
-                    <span className="organizer-text">{event.location}</span>
+          {/* Updated events list with skeleton loader */}
+          {isLoading ? (
+            <EventListSkeleton count={8} />
+          ) : filteredEvents.length > 0 ? (
+            <div className="events-list">
+              {filteredEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="event-card"
+                  onClick={() => handleEventCardClick(event)}
+                >
+                  <div className="event-image">
+                    <img src={event.image} alt={event.title} />
                   </div>
-                  <p className="event-date">{event.date}</p>
+                  <div className="event-content">
+                    <h4 className="event-title">{event.title}</h4>
+                    <div className="event-organizer">
+                      <div
+                        className="organizer-avatars"
+                        dangerouslySetInnerHTML={{ __html: icons.location }}
+                      ></div>
+                      <span className="organizer-text">{event.location}</span>
+                    </div>
+                    <p className="event-date">{event.date}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="events-list">
+              <div className="no-events-message">
+                <p>No events found matching your criteria.</p>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
