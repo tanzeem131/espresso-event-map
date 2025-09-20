@@ -156,7 +156,6 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
-  border: 1px solid rgba(252, 238, 203, 0.2);
   padding: 12px;
   font-family: "PP Neue Montreal", regular;
   width: 200px;
@@ -263,6 +262,151 @@
   font-family: "PP Neue Montreal", regular;
 }
 
+/* New Filter Controls */
+.sidebar-filters {
+  padding: 16px 20px;
+  border-bottom: 1px solid #270903;
+  background: white;
+  flex-shrink: 0;
+}
+
+.filter-dropdown-container {
+  position: relative;
+}
+
+.filter-dropdown-btn {
+  width: 100%;
+  background: #fcebde;
+  border: 1px solid #270903;
+  color: #270903;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "PP Neue Montreal", regular;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.filter-dropdown-btn:hover {
+  background: #f5e6d3;
+  border: 1px solid #270903;
+}
+
+.filter-dropdown-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.filter-dropdown-btn::-moz-focus-inner {
+  border: 0;
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s ease;
+  font-size: 12px;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #270903;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(39, 9, 3, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+  /* Hide scrollbar for webkit browsers */
+  -webkit-scrollbar: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Alternative method for webkit browsers */
+.filter-dropdown-menu::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-section {
+  padding: 12px;
+  border-bottom: 1px solid rgba(39, 9, 3, 0.1);
+}
+
+.filter-section:last-child {
+  border-bottom: none;
+}
+
+.filter-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #270903;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: "PP Neue Montreal", regular;
+  font-size: 14px;
+  color: #270903;
+}
+
+.filter-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #b67237;
+  cursor: pointer;
+}
+
+.filter-option:hover {
+  color: #b67237;
+}
+
+.clear-filters-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #b67237;
+  color: #b67237;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: "PP Neue Montreal", regular;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background: #b67237;
+  color: white;
+}
+
 /* Events List - Scrollable area */
 .events-list {
   flex: 1; /* Takes remaining space */
@@ -272,6 +416,15 @@
   height: 0; /* Required for flex child with overflow */
   max-height: 100%; /* Ensures it doesn't exceed container */
   width: 100%;
+  /* Hide scrollbar for webkit browsers */
+  -webkit-scrollbar: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Alternative method for webkit browsers */
+.events-list::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scrollbar styling */

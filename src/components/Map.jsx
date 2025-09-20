@@ -13,9 +13,24 @@ const Map = () => {
   const layerGroupRef = useRef(null);
   const [filter, setFilter] = useState("all");
 
+  const [sortBy, setSortBy] = useState("date");
+  const [regionFilter, setRegionFilter] = useState("all");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
   const [upcomingEventData, setUpcomingEventData] = useState();
   const [pastEventData, setPastEventData] = useState();
   const [resetMapTrigger, setResetMapTrigger] = useState(0);
+
+  const [hostFilter, setHostFilter] = useState("all"); // Add this state
+
+  // Get unique hosts for filter dropdown
+  const getUniqueHosts = () => {
+    const allEvents = getAllEvents();
+    const hosts = [
+      ...new Set(allEvents.map((event) => event.primaryHost)),
+    ].filter((host) => host !== "Unknown");
+    return hosts.sort();
+  };
 
   const resetMapView = () => {
     setResetMapTrigger((prev) => prev + 1);
@@ -63,6 +78,7 @@ const Map = () => {
   }, []);
 
   // Combine both data sources for sidebar
+  // Fixed getAllEvents function
   const getAllEvents = () => {
     const upcomingEvents =
       upcomingEventData?.events_hosting?.map((event) => ({
@@ -70,8 +86,16 @@ const Map = () => {
         title: event.event.name,
         location: formatLocation(event.event.geo_address_info),
         date: formatReadableDate(event.start_at),
+        dateRaw: event.start_at, // Added
         image: event.event?.cover_url,
         status: getEventStatus(event.start_at),
+        attendees: event.guest_count || 0, // Added
+        hosts: event.hosts || [],
+        primaryHost: event.hosts?.[0]?.name || "Unknown",
+        region:
+          event.event.geo_address_info?.country ||
+          event.event.geo_address_info?.city_state ||
+          "Unknown", // Added
       })) || [];
 
     const pastEvents =
@@ -80,16 +104,74 @@ const Map = () => {
         title: event.event.name,
         location: formatLocation(event.event.geo_address_info),
         date: formatReadableDate(event.start_at),
+        dateRaw: event.start_at, // Added
         image: event.event?.cover_url,
         status: getEventStatus(event.start_at),
+        attendees: event.guest_count || 0, // Added
+        hosts: event.hosts || [],
+        primaryHost: event.hosts?.[0]?.name || "Unknown",
+        region:
+          event.event.geo_address_info?.country ||
+          event.event.geo_address_info?.city_state ||
+          "Unknown", // Added
       })) || [];
 
     return [...upcomingEvents, ...pastEvents];
   };
 
-  const filteredEvents = getAllEvents().filter(
-    (event) => filter === "all" || event.status === filter
-  );
+  // Get unique regions for filter dropdown
+  const getUniqueRegions = () => {
+    const allEvents = getAllEvents();
+    const regions = [...new Set(allEvents.map((event) => event.region))].filter(
+      (region) => region !== "Unknown"
+    );
+    return regions.sort();
+  };
+
+  // Apply filters and sorting
+  const getFilteredAndSortedEvents = () => {
+    let events = getAllEvents();
+
+    // Apply status filter
+    if (filter !== "all") {
+      events = events.filter((event) => event.status === filter);
+    }
+
+    // Apply region filter
+    if (regionFilter !== "all") {
+      events = events.filter((event) => event.region === regionFilter);
+    }
+
+    // Apply host filter
+    if (hostFilter !== "all") {
+      events = events.filter((event) => event.primaryHost === hostFilter);
+    }
+
+    // Fixed sorting with correct property names
+    switch (sortBy) {
+      case "date":
+        events = events.sort(
+          (a, b) => new Date(b.dateRaw) - new Date(a.dateRaw)
+        );
+        break;
+      case "attendees":
+        events = events.sort((a, b) => b.attendees - a.attendees);
+        break;
+      case "name":
+        events = events.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      default:
+        break;
+    }
+
+    return events;
+  };
+
+  const filteredEvents = getFilteredAndSortedEvents();
+
+  // const filteredEvents = getAllEvents().filter(
+  //   (event) => filter === "all" || event.status === filter
+  // );
 
   const [isMapReady, setIsMapReady] = useState(false);
 
@@ -220,10 +302,16 @@ const Map = () => {
     upcomingEventData?.events_hosting
       .filter((event) => {
         const eventStatus = getEventStatus(event.start_at);
-        if (filter === "all") return true;
-        if (filter === "upcoming") return eventStatus === "upcoming";
-        if (filter === "past") return eventStatus === "past";
-        return event.status === filter;
+        const eventRegion =
+          event.event.geo_address_info?.country ||
+          event.event.geo_address_info?.city_state ||
+          "Unknown";
+
+        let statusMatch = filter === "all" || eventStatus === filter;
+        let regionMatch =
+          regionFilter === "all" || eventRegion === regionFilter;
+
+        return statusMatch && regionMatch; // Added region filtering
       })
       .forEach((event) => {
         const lat = event.event.coordinate?.latitude;
@@ -383,10 +471,16 @@ const Map = () => {
     pastEventData?.entries
       .filter((event) => {
         const eventStatus = getEventStatus(event.start_at);
-        if (filter === "all") return true;
-        if (filter === "upcoming") return eventStatus === "upcoming";
-        if (filter === "past") return eventStatus === "past";
-        return event.status === filter;
+        const eventRegion =
+          event.event.geo_address_info?.country ||
+          event.event.geo_address_info?.city_state ||
+          "Unknown";
+
+        let statusMatch = filter === "all" || eventStatus === filter;
+        let regionMatch =
+          regionFilter === "all" || eventRegion === regionFilter;
+
+        return statusMatch && regionMatch; // Added region filtering
       })
       .forEach((event) => {
         const lat = event.event.coordinate?.latitude;
@@ -548,7 +642,15 @@ const Map = () => {
         duration: 2,
       });
     }
-  }, [filter, isMapReady, upcomingEventData, pastEventData, resetMapTrigger]);
+  }, [
+    filter,
+    regionFilter,
+    hostFilter,
+    isMapReady,
+    upcomingEventData,
+    pastEventData,
+    resetMapTrigger,
+  ]);
 
   return (
     <div className="map-view-container">
@@ -617,6 +719,139 @@ const Map = () => {
                   ? "Past Events"
                   : "Upcoming Events"}
               </h2>
+            </div>
+          </div>
+
+          {/* New Filter Controls */}
+          <div className="sidebar-filters">
+            <div className="filter-dropdown-container">
+              <button
+                className="filter-dropdown-btn"
+                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+              >
+                <span>Sort & Filter</span>
+                <span
+                  className={`dropdown-arrow ${
+                    isFilterDropdownOpen ? "open" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
+
+              {isFilterDropdownOpen && (
+                <div className="filter-dropdown-menu">
+                  {/* Sort Options */}
+                  <div className="filter-section">
+                    <h4 className="filter-section-title">Sort By</h4>
+                    <div className="filter-options">
+                      <label className="filter-option">
+                        <input
+                          type="radio"
+                          name="sortBy"
+                          value="date"
+                          checked={sortBy === "date"}
+                          onChange={(e) => setSortBy(e.target.value)}
+                        />
+                        <span>Date</span>
+                      </label>
+                      <label className="filter-option">
+                        <input
+                          type="radio"
+                          name="sortBy"
+                          value="attendees"
+                          checked={sortBy === "attendees"}
+                          onChange={(e) => setSortBy(e.target.value)}
+                        />
+                        <span>Attendees</span>
+                      </label>
+                      <label className="filter-option">
+                        <input
+                          type="radio"
+                          name="sortBy"
+                          value="name"
+                          checked={sortBy === "name"}
+                          onChange={(e) => setSortBy(e.target.value)}
+                        />
+                        <span>Name</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Region Filter */}
+                  <div className="filter-section">
+                    <h4 className="filter-section-title">Region</h4>
+                    <div className="filter-options">
+                      <label className="filter-option">
+                        <input
+                          type="radio"
+                          name="regionFilter"
+                          value="all"
+                          checked={regionFilter === "all"}
+                          onChange={(e) => setRegionFilter(e.target.value)}
+                        />
+                        <span>All Regions</span>
+                      </label>
+                      {getUniqueRegions().map((region) => (
+                        <label key={region} className="filter-option">
+                          <input
+                            type="radio"
+                            name="regionFilter"
+                            value={region}
+                            checked={regionFilter === region}
+                            onChange={(e) => setRegionFilter(e.target.value)}
+                          />
+                          <span>{region}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Host Filter - NEW SECTION */}
+                  <div className="filter-section">
+                    <h4 className="filter-section-title">Hosted By</h4>
+                    <div className="filter-options">
+                      <label className="filter-option">
+                        <input
+                          type="radio"
+                          name="hostFilter"
+                          value="all"
+                          checked={hostFilter === "all"}
+                          onChange={(e) => setHostFilter(e.target.value)}
+                        />
+                        <span>All Hosts</span>
+                      </label>
+                      {getUniqueHosts().map((host) => (
+                        <label key={host} className="filter-option">
+                          <input
+                            type="radio"
+                            name="hostFilter"
+                            value={host}
+                            checked={hostFilter === host}
+                            onChange={(e) => setHostFilter(e.target.value)}
+                          />
+                          <span>{host}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="filter-section">
+                    <button
+                      className="clear-filters-btn"
+                      onClick={() => {
+                        setSortBy("date");
+                        setRegionFilter("all");
+                        setHostFilter("all");
+                        setIsFilterDropdownOpen(false);
+                      }}
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
