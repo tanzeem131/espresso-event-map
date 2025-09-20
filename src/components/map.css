@@ -580,8 +580,17 @@
   font-weight: 500;
   margin-top: 6px;
   transition: all 0.2s ease;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
+.map-reset-btn:focus,
+.map-reset-btn:active,
+.map-reset-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 1.5px solid #de9e67 !important;
+}
 /* This correctly hides the default Leaflet container */
 .custom-leaflet-icon {
   background: transparent;
@@ -835,4 +844,118 @@
 
 .popup-zoom-btn:focus {
   outline: none;
+}
+
+/* Search Feature Styles */
+.search-container {
+  margin-bottom: 12px;
+  padding: 0 0px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  padding-right: 40px; /* Space for clear button */
+  border: 1px solid #270903;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #270903;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "PP Neue Montreal", regular;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #b67237;
+  box-shadow: 0 0 0 2px rgba(182, 114, 55, 0.1);
+}
+
+.search-input::placeholder {
+  color: #a0956b;
+  font-style: italic;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #b67237;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.search-clear-btn:hover {
+  background-color: #f5ebe0;
+  color: #270903;
+}
+
+.search-clear-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(182, 114, 55, 0.3);
+}
+
+/* Search results highlight (optional enhancement) */
+.search-highlight {
+  background-color: #fff3e0;
+  color: #b67237;
+  font-weight: 500;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+/* Updated no events message for search */
+.no-events-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #b67237;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.no-events-message p {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px;
+    padding-right: 40px;
+  }
+
+  .search-clear-btn {
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
 }

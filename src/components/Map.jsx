@@ -18,6 +18,9 @@ const Map = () => {
   const [regionFilter, setRegionFilter] = useState("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
+  // Add search state
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Add loading states
   const [isLoadingUpcoming, setIsLoadingUpcoming] = useState(true);
   const [isLoadingPast, setIsLoadingPast] = useState(true);
@@ -144,6 +147,13 @@ const Map = () => {
   const getFilteredAndSortedEvents = () => {
     let events = getAllEvents();
 
+    // Apply search filter first (case-insensitive)
+    if (searchQuery.trim()) {
+      events = events.filter((event) =>
+        event.title.toLowerCase().includes(searchQuery.toLowerCase().trim())
+      );
+    }
+
     // Apply status filter
     if (filter !== "all") {
       events = events.filter((event) => event.status === filter);
@@ -253,8 +263,22 @@ const Map = () => {
             layer.openPopup();
           }
         });
-      }, 2200); // Delay to allow fly animation to complete
+      }, 1000); // Delay to allow fly animation to complete
     }
+  };
+
+  // Clear search function
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  // Clear all filters and search
+  const clearAllFiltersAndSearch = () => {
+    setSortBy("date");
+    setRegionFilter("all");
+    setHostFilter("all");
+    setSearchQuery("");
+    setIsFilterDropdownOpen(false);
   };
 
   useEffect(() => {
@@ -659,6 +683,7 @@ const Map = () => {
     regionFilter,
     hostFilter,
     isMapReady,
+    searchQuery,
     upcomingEventData,
     pastEventData,
     resetMapTrigger,
@@ -736,6 +761,27 @@ const Map = () => {
 
           {/* New Filter Controls */}
           <div className="sidebar-filters">
+            {/* Search Input */}
+            <div className="search-container">
+              <div className="search-input-wrapper">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search events by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    className="search-clear-btn"
+                    onClick={clearSearch}
+                    title="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="filter-dropdown-container">
               <button
                 className="filter-dropdown-btn"
@@ -852,12 +898,7 @@ const Map = () => {
                   <div className="filter-section">
                     <button
                       className="clear-filters-btn"
-                      onClick={() => {
-                        setSortBy("date");
-                        setRegionFilter("all");
-                        setHostFilter("all");
-                        setIsFilterDropdownOpen(false);
-                      }}
+                      onClick={clearAllFiltersAndSearch}
                     >
                       Clear All Filters
                     </button>
@@ -898,7 +939,11 @@ const Map = () => {
           ) : (
             <div className="events-list">
               <div className="no-events-message">
-                <p>No events found matching your criteria.</p>
+                <p>
+                  {searchQuery
+                    ? `No events found matching "${searchQuery}"`
+                    : "No events found matching your criteria."}
+                </p>
               </div>
             </div>
           )}
