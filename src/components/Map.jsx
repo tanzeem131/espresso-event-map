@@ -18,6 +18,11 @@ const Map = () => {
   const [regionFilter, setRegionFilter] = useState("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
+  // Add these state variables to your existing Map component (after your existing states)
+  const [userLocation, setUserLocation] = useState(null);
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
   // Add search state
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -45,6 +50,16 @@ const Map = () => {
 
   const resetMapView = () => {
     setResetMapTrigger((prev) => prev + 1);
+  };
+
+  //////////
+  ////////////
+  ////////
+  const shouldShowEvent = (event) => {
+    if (!showNearbyOnly || !userLocation) return true;
+
+    const nearbyEvents = getNearbyEvents();
+    return nearbyEvents.some((nearbyEvent) => nearbyEvent.id === event.api_id);
   };
 
   const fetchDataUpcomingEvent = async () => {
@@ -143,9 +158,132 @@ const Map = () => {
     return regions.sort();
   };
 
+  /////////////////
+  ////////////
+  //////////////
+
+  // Distance calculation function
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of Earth in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Get events with distances and find closest 5
+  const getNearbyEvents = () => {
+    if (!userLocation) return [];
+
+    const allEvents = getAllEvents();
+    const eventsWithDistance = [];
+
+    // Calculate distances for events that have coordinates
+    allEvents.forEach((event) => {
+      let coordinates = null;
+
+      // Get coordinates from original data
+      const upcomingEvent = upcomingEventData?.events_hosting?.find(
+        (e) => e.api_id === event.id
+      );
+      if (upcomingEvent?.event?.coordinate) {
+        coordinates = upcomingEvent.event.coordinate;
+      } else {
+        const pastEvent = pastEventData?.entries?.find(
+          (e) => e.api_id === event.id
+        );
+        if (pastEvent?.event?.coordinate) {
+          coordinates = pastEvent.event.coordinate;
+        }
+      }
+
+      if (coordinates?.latitude && coordinates?.longitude) {
+        const distance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          coordinates.latitude,
+          coordinates.longitude
+        );
+        eventsWithDistance.push({ ...event, distance });
+      }
+    });
+
+    // Sort by distance and return top 5
+    return eventsWithDistance
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3);
+  };
+
+  // Handle nearby events button click
+  const handleNearbyEvents = () => {
+    if (showNearbyOnly) {
+      // Turn off nearby mode
+      setShowNearbyOnly(false);
+      setUserLocation(null);
+      return;
+    }
+
+    // Get user location
+    setIsGettingLocation(true);
+
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by this browser.");
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setShowNearbyOnly(true);
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        let errorMessage = "Unable to get your location. ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Location access was denied.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out.";
+            break;
+          default:
+            errorMessage += "An unknown error occurred.";
+        }
+        alert(errorMessage);
+        setIsGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
+  /////////
+  /////
+
   // Apply filters and sorting
   const getFilteredAndSortedEvents = () => {
     let events = getAllEvents();
+
+    // If showing nearby only, get nearby events instead of all events
+    if (showNearbyOnly && userLocation) {
+      events = getNearbyEvents();
+    } else {
+      events = getAllEvents();
+    }
 
     // Apply search filter first (case-insensitive)
     if (searchQuery.trim()) {
@@ -347,7 +485,9 @@ const Map = () => {
         let regionMatch =
           regionFilter === "all" || eventRegion === regionFilter;
 
-        return statusMatch && regionMatch; // Added region filtering
+        let nearbyMatch = shouldShowEvent(event);
+
+        return statusMatch && regionMatch && nearbyMatch; // Added region filtering
       })
       .forEach((event) => {
         const lat = event.event.coordinate?.latitude;
@@ -516,7 +656,9 @@ const Map = () => {
         let regionMatch =
           regionFilter === "all" || eventRegion === regionFilter;
 
-        return statusMatch && regionMatch; // Added region filtering
+        let nearbyMatch = shouldShowEvent(event);
+
+        return statusMatch && regionMatch && nearbyMatch; // Added region filtering
       })
       .forEach((event) => {
         const lat = event.event.coordinate?.latitude;
@@ -697,9 +839,7 @@ const Map = () => {
         </div>
         <div className="map-header-content">
           <div className="map-header-title">Espresso World Events</div>
-          <div className="map-header-subtitle">
-            Discover where we've been and where we're heading next
-          </div>
+          <div className="map-header-subtitle">Tracing our global journey</div>
         </div>
         <div className="map-header-globe">
           <img src="/Openess.png" />
@@ -906,6 +1046,20 @@ const Map = () => {
                 </div>
               )}
             </div>
+            <button
+              className={`nearby-events-btn ${showNearbyOnly ? "active" : ""}`}
+              onClick={handleNearbyEvents}
+              disabled={isGettingLocation}
+            >
+              {isGettingLocation
+                ? "Getting Location..."
+                : showNearbyOnly
+                ? "Show All Events"
+                : "Nearby Events"}
+              <span
+                dangerouslySetInnerHTML={{ __html: icons.locationNewIcon }}
+              ></span>
+            </button>
           </div>
 
           {/* Updated events list with skeleton loader */}

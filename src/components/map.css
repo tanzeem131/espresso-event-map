@@ -264,7 +264,7 @@
 
 /* New Filter Controls */
 .sidebar-filters {
-  padding: 16px 20px;
+  padding: 8px 12px;
   border-bottom: 1px solid #270903;
   background: white;
   flex-shrink: 0;
@@ -958,4 +958,42 @@
     height: 28px;
     font-size: 20px;
   }
+}
+
+/* Nearby Events Button */
+.nearby-events-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: #f0e89d;
+  color: #605812;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nearby-events-btn:hover:not(:disabled) {
+  background: #b9ad3e;
+  transform: translateY(-1px);
+}
+
+.nearby-events-btn:disabled {
+  background: #b9ad3e;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nearby-events-btn.active {
+  background: #b9ad3e;
+}
+
+.nearby-events-btn.active:hover {
+  background: #b9ad3e;
 }
