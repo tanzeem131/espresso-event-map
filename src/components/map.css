@@ -1,8 +1,8 @@
-/* General Component Layout */
 .map-view-container {
-  background: #0a0a0a;
-  color: #ffffff;
+  background: #fcebde;
+  color: #b67237;
   width: 100vw;
+  height: 100vh;
   position: relative;
   left: 50%;
   right: 50%;
@@ -11,18 +11,19 @@
 }
 
 .leaflet-container.leaflet-touch-drag {
-  background: #262626;
+  background: #aad3df;
 }
 
 .map-header {
   background: #fcebde;
   border-bottom: 2px solid #270903;
-  padding: 10px;
+  padding: 5px;
   display: grid;
   justify-content: center;
   align-items: center;
   grid-template-columns: repeat(12, 1fr);
   gap: 20px;
+  height: 15%;
 }
 
 .map-header-logo {
@@ -121,17 +122,32 @@
   }
 }
 
-.map-container {
-  height: 800px;
+/* Main layout container */
+.map-layout {
+  display: flex;
+  height: 85vh;
   width: 100%;
   position: relative;
+}
+
+/* Map container - 80% width */
+.map-container {
+  width: 80%;
+  height: 100%;
+  position: relative;
   background-color: #aad3df;
-  transition: all 0.5s ease;
   will-change: transform;
 }
 
-/* Map Legend */
-.map-legend {
+/* Map area */
+.map-area {
+  height: 100%;
+  width: 100%;
+  background-color: #aad3df;
+}
+
+/* Map Legend Filter */
+.map-legend-filter-container {
   position: absolute;
   top: 1%;
   left: 1%;
@@ -148,6 +164,7 @@
   flex-direction: column;
   gap: 8px;
 }
+
 .map-legend-title {
   font-size: 0.8rem;
   font-weight: 500;
@@ -170,6 +187,7 @@
   border-radius: 10px;
   transition: all 0.2s ease-in-out;
 }
+
 .map-legend-item:hover {
   background-color: rgba(252, 238, 203, 0.1);
   opacity: 1;
@@ -181,9 +199,202 @@
   opacity: 1;
   font-weight: 500;
 }
+/* Sidebar - 20% width with fixed height */
+.sidebar {
+  width: 20%;
+  background: white;
+  border: 1px solid #270903;
+  color: #270903;
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  height: 100%; /* Takes full height of parent container */
+  max-height: 100%; /* Prevents overflow */
+}
+
+/* Sidebar Header - Fixed height */
+.sidebar-header {
+  padding: 5px;
+  border-bottom: 2px solid #270903;
+  background: white;
+  display: flex;
+  gap: 5%;
+  flex-shrink: 0; /* Prevents header from shrinking */
+  height: auto; /* Let content determine height */
+}
+
+.sidebar-logo {
+  /* margin-bottom: 8px; */
+}
+
+.logo-circle {
+  width: 48px;
+  height: 48px;
+  background: #fcebde;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-circle img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.sidebar-title-section {
+  margin-bottom: 2px;
+}
+
+.sidebar-brand {
+  color: #270903;
+  font-size: 14px;
+  font-weight: 400;
+  margin: 0 0 2px 0;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.sidebar-title {
+  color: #270903;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  font-family: "PP Neue Montreal", regular;
+}
+
+/* Events List - Scrollable area */
+.events-list {
+  flex: 1; /* Takes remaining space */
+  overflow-y: auto; /* Enables vertical scrolling */
+  overflow-x: hidden; /* Prevents horizontal scrolling */
+  padding: 0;
+  height: 0; /* Required for flex child with overflow */
+  max-height: 100%; /* Ensures it doesn't exceed container */
+  width: 100%;
+}
+
+/* Custom scrollbar styling */
+.events-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.events-list::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* Event Card */
+.event-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #270903;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0; /* Prevents cards from shrinking */
+}
+
+.event-card:hover {
+  background-color: #fcebde;
+}
+
+.event-image {
+  flex-shrink: 0;
+}
+
+.event-image img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.event-content {
+  flex: 1;
+  min-width: 0; /* Allows text truncation */
+}
+
+.event-title {
+  color: #270903;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+  font-family: "PP Neue Montreal", regular;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.event-organizer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.organizer-avatars {
+  display: flex;
+  margin-right: 4px;
+}
+
+.organizer-text {
+  color: #605812;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "PP Neue Montreal", regular;
+}
+
+.event-date {
+  color: #b67237;
+  font-size: 13px;
+  margin: 0;
+  font-family: "PP Neue Montreal", regular;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .map-container {
+    width: 70%;
+  }
+
+  .sidebar {
+    width: 30%;
+    min-width: 280px;
+  }
+}
 
 @media (max-width: 768px) {
-  .map-legend {
+  .map-layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .map-container {
+    width: 100%;
+    height: 400px;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 400px;
+    min-width: unset;
+  }
+
+  .map-legend-filter-container {
     width: 160px;
     padding: 10px;
     gap: 6px;
@@ -205,95 +416,114 @@
   display: none;
 }
 
-.marker-box {
-  position: relative;
-  padding: 6px 12px;
-  font-family: "PP Neue Montreal", regular;
-  font-size: 13px;
+.map-reset-btn {
+  background: transparent;
+  color: #de9e67;
+  border: 2px solid #de9e67 !important;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
   font-weight: 500;
-  border-radius: 8px;
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease-out;
+  margin-top: 8px;
+  transition: all 0.2s ease;
 }
 
-.marker-box:hover {
-  transform: scale(1.05);
-  z-index: 10;
+/* This correctly hides the default Leaflet container */
+.custom-leaflet-icon {
+  background: transparent;
+  border: none;
 }
 
-.marker-box::after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid;
+/* Make the marker-box itself transparent */
+.marker-box {
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
-
+/* Style for the golden 'upcoming' icon */
 .marker-box.upcoming {
-  background-color: #de9e67;
-  color: #270903;
+  color: #b67237;
 }
 
-.marker-box.upcoming::after {
-  border-top-color: #de9e67;
-}
+/* Style for the black 'past' icon */
 .marker-box.past {
-  background-color: #3d3d3d;
-  color: #e0e0e0;
-  border-color: rgba(0, 0, 0, 0.4);
+  color: black;
 }
-
-.marker-box.past::after {
-  border-top-color: #3d3d3d;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 2px 8px rgba(247, 147, 30, 0.4);
-  }
-  50% {
-    box-shadow: 0 2px 8px rgba(247, 147, 30, 0.8),
-      0 0 20px rgba(247, 147, 30, 0.3);
-  }
-  100% {
-    box-shadow: 0 2px 8px rgba(247, 147, 30, 0.4);
-  }
-}
-
-/* Custom Popups */
+/* Custom Popups - Fixed positioning with minimal gap */
 .leaflet-popup-content-wrapper {
   padding: 0 !important;
   border-radius: 16px !important;
   background: transparent !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-  bottom: -20px;
+  position: relative;
+  z-index: 1001;
+  transform: translateY(-5px) !important; /* Reduced from -60px */
+  margin: 0 !important;
+}
+
+.leaflet-popup-tip-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 11px !important; /* Control tip height */
+}
+
+.leaflet-popup-tip {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .leaflet-popup-content {
   margin: 0 !important;
   padding: 0 !important;
+  width: auto !important;
 }
 
-.leaflet-popup-tip {
-  background: #b85c3e !important;
+.leaflet-popup {
+  z-index: 1001 !important;
+  margin-bottom: 0 !important;
 }
 
+/* Remove default leaflet popup margins */
+.leaflet-popup-close-button {
+  display: none !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  display: none !important;
+}
+
+/* Custom popup container positioning */
+.custom-popup .leaflet-popup-content-wrapper {
+  transform: translateY(0) !important; /* Reset transform for custom popup */
+}
+
+/* Your popup content styles */
 .popup-content {
   font-family: "PP Neue Montreal", regular;
   border-radius: 16px;
   overflow: hidden;
-  min-width: 400px;
+  min-width: 350px;
+  max-width: 350px; /* Reduced from 400px */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1002;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent popup from going off-screen */
+.leaflet-popup {
+  max-height: calc(100vh - 100px) !important;
+  overflow: visible !important;
+}
+
+.leaflet-popup-content-wrapper {
+  max-height: calc(100vh - 150px) !important;
+  overflow-y: auto !important;
 }
 
 .popup-header {
@@ -426,9 +656,6 @@
 .popup-status-badge.status-past {
   background: #e5e5e5;
   color: #666;
-}
-.leaflet-popup-close-button {
-  display: none !important;
 }
 
 .popup-footer {

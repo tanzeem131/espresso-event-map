@@ -7,7 +7,7 @@ export const icons = {
           stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M13.954 10C15.46 11.512 15.324 14.099 13.651 15.779L11.227 18.212L8.803 20.645C7.13 22.325 4.552 22.461 3.046 20.95C1.54 19.438 1.676 16.85 3.349 15.171L5.773 12.737"
           stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`,
+   </svg>`,
 
   calendar: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -30,65 +30,39 @@ export const icons = {
   close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="18" y1="6" x2="6" y2="18"></line>
       <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>`,
+      </svg>`,
+
+  location: `<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+          <path fill-rule="evenodd" d="M11.906 1.994a8.002 8.002 0 0 1 8.09 8.421 7.996 7.996 0 0 1-1.297 3.957.996.996 0 0 1-.133.204l-.108.129c-.178.243-.37.477-.573.699l-5.112 6.224a1 1 0 0 1-1.545 0L5.982 15.26l-.002-.002a18.146 18.146 0 0 1-.309-.38l-.133-.163a.999.999 0 0 1-.13-.202 7.995 7.995 0 0 1 6.498-12.518ZM15 9.997a3 3 0 1 1-5.999 0 3 3 0 0 1 5.999 0Z" clip-rule="evenodd"/>
+        </svg>
+        `,
 };
 
-export const events = [
-  {
-    name: "Espresso Brews WebX",
-    lat: 35.6586,
-    lng: 139.7486,
-    location: "Tera Cafe Shien Zojo ji, Tokyo, Japan",
-    date: "August 26, 2025 10:00 am",
-    link: "https://www.espressosys.com/community",
-    description: "A special WebX brew event at Tera Cafe.",
-    status: "past",
-    attendees: null,
-  },
-  {
-    name: "Ethereum 10Y Anniversary",
-    lat: 37.7825,
-    lng: -122.4099,
-    location: "Frontier Tower, 995 Market St, San Francisco, USA",
-    date: "July 30, 2025 4:00 pm",
-    link: "https://www.espressosys.com/community",
-    description:
-      "Celebrating the 10-year anniversary of Ethereum in San Francisco.",
-    status: "past",
-    attendees: null,
-  },
-  {
-    name: "Brewing the Base Layer | Espresso Happy Hour 🍸",
-    lat: 37.5665,
-    lng: 126.978,
-    location: "Seoul, Korea",
-    date: "September 20, 2025 4:00 pm",
-    link: "https://luma.com/e0u6mnoc",
-    description:
-      "Espresso Systems invites you to come enjoy an Espresso martini while discovering what we’re brewing in the Ethereum L2 space.",
-    status: "upcoming",
-    attendees: 222,
-  },
-  {
-    name: "Espresso & Partner Brews | KBW",
-    lat: 37.5370666,
-    lng: 126.9991267,
-    location: "Seoul, Korea",
-    date: "September 22, 2025 12:00 pm",
-    link: "https://luma.com/h9uxi7c1",
-    description: "Partner event at mtl cafe & bakery Hannam during KBW.",
-    status: "upcoming",
-    attendees: null,
-  },
-  {
-    name: "That's That Me Espresso | Karaoke Night 🎤",
-    lat: 36.5665,
-    lng: 125.978,
-    location: "Seoul, Korea",
-    date: "September 25, 2025 8:00 pm",
-    link: "https://luma.com/z4vmc849",
-    description: "Espresso Karaoke Night event at KBW.",
-    status: "upcoming",
-    attendees: 612,
-  },
-];
+export const getEventStatus = (startAt) => {
+  const now = new Date();
+  const eventStart = new Date(startAt);
+
+  return eventStart > now ? "upcoming" : "past";
+};
+
+export const formatReadableDate = (dateString) => {
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+export const formatLocation = (geoInfo) => {
+  if (!geoInfo) return "";
+  const city = geoInfo.city || geoInfo.city_state || "";
+  const country = geoInfo.country || "";
+
+  if (city && country) return `${city}, ${country}`;
+  return city || country || "";
+};

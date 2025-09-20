@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import "./map.css";
 import { icons } from "../utils/constants";
-import { events } from "../utils/constants";
+import { getEventStatus } from "../utils/constants";
+import { formatReadableDate } from "../utils/constants";
+import { formatLocation } from "../utils/constants";
 
 const Map = () => {
   const mapRef = useRef(null);
@@ -10,6 +12,84 @@ const Map = () => {
 
   const layerGroupRef = useRef(null);
   const [filter, setFilter] = useState("all");
+
+  const [upcomingEventData, setUpcomingEventData] = useState();
+  const [pastEventData, setPastEventData] = useState();
+  const [resetMapTrigger, setResetMapTrigger] = useState(0);
+
+  const resetMapView = () => {
+    setResetMapTrigger((prev) => prev + 1);
+  };
+
+  const fetchDataUpcomingEvent = async () => {
+    try {
+      const res = await fetch(
+        "/api/user/profile/events?username=usr-cAqsoa41hhkQxPs"
+      );
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const resdata = await res.json();
+      setUpcomingEventData(resdata);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataUpcomingEvent();
+  }, []);
+
+  console.log(upcomingEventData);
+
+  const fetchDataPastEvent = async () => {
+    try {
+      const res = await fetch(
+        "/api/user/profile/events-hosting?pagination_cursor=evt-cqNTbzDjHZx4YJc&pagination_limit=40&period=past&user_api_id=usr-cAqsoa41hhkQxPs"
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const resdata = await res.json();
+      setPastEventData(resdata);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataPastEvent();
+  }, []);
+
+  // Combine both data sources for sidebar
+  const getAllEvents = () => {
+    const upcomingEvents =
+      upcomingEventData?.events_hosting?.map((event) => ({
+        id: event.api_id,
+        title: event.event.name,
+        location: formatLocation(event.event.geo_address_info),
+        date: formatReadableDate(event.start_at),
+        image: event.event?.cover_url,
+        status: getEventStatus(event.start_at),
+      })) || [];
+
+    const pastEvents =
+      pastEventData?.entries?.map((event) => ({
+        id: event.api_id,
+        title: event.event.name,
+        location: formatLocation(event.event.geo_address_info),
+        date: formatReadableDate(event.start_at),
+        image: event.event?.cover_url,
+        status: getEventStatus(event.start_at),
+      })) || [];
+
+    return [...upcomingEvents, ...pastEvents];
+  };
+
+  const filteredEvents = getAllEvents().filter(
+    (event) => filter === "all" || event.status === filter
+  );
 
   const [isMapReady, setIsMapReady] = useState(false);
 
@@ -36,6 +116,53 @@ const Map = () => {
     });
   };
 
+  const handleEventCardClick = (event) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Find the event data to get coordinates
+    let eventData = null;
+
+    // Check in upcoming events
+    const upcomingEvent = upcomingEventData?.events_hosting?.find(
+      (e) => e.api_id === event.id
+    );
+    if (upcomingEvent) {
+      eventData = upcomingEvent;
+    } else {
+      // Check in past events
+      const pastEvent = pastEventData?.entries?.find(
+        (e) => e.api_id === event.id
+      );
+      if (pastEvent) {
+        eventData = pastEvent;
+      }
+    }
+
+    if (eventData && eventData.event.coordinate) {
+      const { latitude, longitude } = eventData.event.coordinate;
+
+      // Fly to the location and open popup
+      map.flyTo([latitude, longitude], 6, {
+        animate: true,
+        duration: 2,
+      });
+
+      // Find and open the marker popup after a short delay
+      setTimeout(() => {
+        layerGroupRef.current.eachLayer((layer) => {
+          if (
+            layer.getLatLng &&
+            layer.getLatLng().lat === latitude &&
+            layer.getLatLng().lng === longitude
+          ) {
+            layer.openPopup();
+          }
+        });
+      }, 2200); // Delay to allow fly animation to complete
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     const initializeMap = async () => {
@@ -46,9 +173,18 @@ const Map = () => {
         const map = L.map(mapRef.current, {
           center: [20, 0],
           zoom: 2,
+          minZoom: 2, // Prevents zooming out too much
+          maxZoom: 18, // Limits maximum zoom
           zoomControl: false,
           scrollWheelZoom: true,
+          worldCopyJump: false, // Prevents world wrapping
+          maxBounds: [
+            [-90, -180],
+            [90, 180],
+          ], // Keeps map within world bounds
+          maxBoundsViscosity: 1.0, // Makes bounds "sticky"
         });
+
         mapInstanceRef.current = map;
 
         L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
@@ -81,14 +217,28 @@ const Map = () => {
     const L = window.L;
     const map = mapInstanceRef.current;
 
-    events
-      .filter((event) => filter === "all" || event.status === filter)
+    upcomingEventData?.events_hosting
+      .filter((event) => {
+        const eventStatus = getEventStatus(event.start_at);
+        if (filter === "all") return true;
+        if (filter === "upcoming") return eventStatus === "upcoming";
+        if (filter === "past") return eventStatus === "past";
+        return event.status === filter;
+      })
       .forEach((event) => {
+        const lat = event.event.coordinate?.latitude;
+        const lng = event.event.coordinate?.longitude;
+
+        if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+          return;
+        }
+
+        const eventStatus = getEventStatus(event.start_at);
         const icon = L.divIcon({
           className: "custom-leaflet-icon",
           html: `
-            <div class="marker-box ${event.status}">
-            ${event.name}   
+            <div class="marker-box ${eventStatus}">
+            ${icons.location}   
             </div>
       `,
           iconSize: [80, 30],
@@ -99,39 +249,40 @@ const Map = () => {
             <div class="popup-header">
               <div class="popup-icon"><img src="/ES-symbol.png" /></div>
               <div class="popup-header-text">
-                <div class="popup-title">${event.name}</div>
-                <div class="popup-country">${event.location}</div>
+                <div class="popup-title">${event.event.name}</div>
+                <div class="popup-country">
+                ${formatLocation(event.event.geo_address_info)}
+                </div>
               </div>
               <div class="popup-close">${icons.close}</div>
             </div>
             <div class="popup-body">
               <div class="popup-date-section">
                 <div class="popup-date-icon">${icons.calendar}</div>
-                <div class="popup-date">${event.date}</div>
+                <div class="popup-date">${formatReadableDate(
+                  event.start_at
+                )}</div>
               </div>
               <div class="popup-attendees">
                 <div class="popup-attendees-icon">${icons.people}</div>
                 <div class="popup-attendees-text">${
-                  event.attendees
-                } expected attendees</div>
+                  event.guest_count
+                } attendees</div>
               </div>
-              <div class="popup-description">
-                <div class="popup-description-icon">${icons.star}</div>
-                <div class="popup-description-text">${event.description}</div>
-              </div>
+              
               <div class="popup-link">
                 <div class="popup-link-icon">${icons.link}</div>
-                <a href="${
-                  event.link
+                <a href="https://luma.com/${
+                  event.event.url
                 }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
                 Register
                 </a>
               </div>
               
               <div class="popup-footer">
-                <div class="popup-status-badge status-${event.status}">
+                <div class="popup-status-badge status-${eventStatus}">
                   ${
-                    event.status === "past"
+                    eventStatus === "past"
                       ? "COMPLETED EVENT"
                       : "UPCOMING EVENT"
                   }
@@ -143,14 +294,47 @@ const Map = () => {
             </div>
           </div>
         `;
-        L.marker([event.lat, event.lng], { icon })
+        L.marker(
+          [event.event.coordinate.latitude, event.event.coordinate.longitude],
+          { icon }
+        )
           .bindPopup(popupContent, {
             className: "custom-popup",
-            maxWidth: 300,
+            maxWidth: 350,
             closeButton: false,
-            autoPan: true,
+            autoPan: true, // Enable auto-panning
+            autoPanPadding: [50, 50], // Padding from screen edges
+            keepInView: true, // Keep popup in view
+            offset: [0, -10],
           })
           .on("popupopen", (e) => {
+            // Center the map on the marker when popup opens
+            const map = mapInstanceRef.current;
+            if (map) {
+              const mapContainer = map.getContainer();
+              const mapRect = mapContainer.getBoundingClientRect();
+              const headerHeight = 130; // Adjust based on your header height
+
+              // Calculate center point accounting for header
+              const adjustedCenterY =
+                (mapRect.height - headerHeight) / 2 + headerHeight;
+              const centerPoint = [mapRect.width / 2, adjustedCenterY];
+
+              // Convert to lat/lng and pan to that position
+              const targetLatLng = map.containerPointToLatLng(centerPoint);
+              map.setView(
+                [
+                  event.event.coordinate.latitude,
+                  event.event.coordinate.longitude,
+                ],
+                map.getZoom(),
+                {
+                  animate: true,
+                  duration: 0.3,
+                }
+              );
+            }
+
             const popupNode = e.popup.getElement();
             const closeBtn = popupNode.querySelector(".popup-close");
             if (closeBtn) {
@@ -163,20 +347,196 @@ const Map = () => {
             if (zoomBtn) {
               zoomBtn.addEventListener("click", () => {
                 if (map) {
-                  map.flyTo([event.lat, event.lng], 16, {
-                    animate: true,
-                    duration: 2,
-                  });
+                  map.flyTo(
+                    [
+                      event.event.coordinate.latitude,
+                      event.event.coordinate.longitude,
+                    ],
+                    16,
+                    {
+                      animate: true,
+                      duration: 2,
+                    }
+                  );
                 }
               });
             }
           })
           .on("click", () => {
             if (map) {
-              map.flyTo([event.lat, event.lng], 5, {
-                animate: true,
-                duration: 1.5,
+              map.flyTo(
+                [
+                  event.event.coordinate.latitude,
+                  event.event.coordinate.longitude,
+                ],
+                4,
+                {
+                  animate: true,
+                  duration: 1.5,
+                }
+              );
+            }
+          })
+          .addTo(layerGroupRef.current);
+      });
+
+    pastEventData?.entries
+      .filter((event) => {
+        const eventStatus = getEventStatus(event.start_at);
+        if (filter === "all") return true;
+        if (filter === "upcoming") return eventStatus === "upcoming";
+        if (filter === "past") return eventStatus === "past";
+        return event.status === filter;
+      })
+      .forEach((event) => {
+        const lat = event.event.coordinate?.latitude;
+        const lng = event.event.coordinate?.longitude;
+
+        if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+          return;
+        }
+        const eventStatus = getEventStatus(event.start_at);
+        const icon = L.divIcon({
+          className: "custom-leaflet-icon",
+          html: `
+            <div class="marker-box ${eventStatus}">
+            ${icons.location}   
+            </div>
+      `,
+          iconSize: [80, 30],
+          iconAnchor: [40, 15],
+        });
+        const popupContent = `
+          <div class="popup-content">
+            <div class="popup-header">
+              <div class="popup-icon"><img src="/ES-symbol.png" /></div>
+              <div class="popup-header-text">
+                <div class="popup-title">${event.event.name}</div>
+                <div class="popup-country">
+                ${formatLocation(event.event.geo_address_info)}
+                </div>
+              </div>
+              <div class="popup-close">${icons.close}</div>
+            </div>
+            <div class="popup-body">
+              <div class="popup-date-section">
+                <div class="popup-date-icon">${icons.calendar}</div>
+                <div class="popup-date">${formatReadableDate(
+                  event.start_at
+                )}</div>
+              </div>
+              <div class="popup-attendees">
+                <div class="popup-attendees-icon">${icons.people}</div>
+                <div class="popup-attendees-text">${
+                  event.guest_count
+                } attendees</div>
+              </div>
+              
+              <div class="popup-link">
+                <div class="popup-link-icon">${icons.link}</div>
+                <a href="https://luma.com/${
+                  event.event.url
+                }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
+                Register
+                </a>
+              </div>
+              
+              <div class="popup-footer">
+                <div class="popup-status-badge status-${eventStatus}">
+                  ${
+                    eventStatus === "past"
+                      ? "COMPLETED EVENT"
+                      : "UPCOMING EVENT"
+                  }
+                </div>
+                <button class="popup-zoom-btn">
+                  Go to Location
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        L.marker(
+          [event.event.coordinate?.latitude, event.event.coordinate?.longitude],
+          { icon }
+        )
+          .bindPopup(popupContent, {
+            className: "custom-popup",
+            maxWidth: 350,
+            closeButton: false,
+            autoPan: true, // Enable auto-panning
+            autoPanPadding: [50, 50], // Padding from screen edges
+            keepInView: true, // Keep popup in view
+            offset: [0, -10],
+          })
+          .on("popupopen", (e) => {
+            // Center the map on the marker when popup opens
+            const map = mapInstanceRef.current;
+            if (map) {
+              const mapContainer = map.getContainer();
+              const mapRect = mapContainer.getBoundingClientRect();
+              const headerHeight = 130; // Adjust based on your header height
+
+              // Calculate center point accounting for header
+              const adjustedCenterY =
+                (mapRect.height - headerHeight) / 2 + headerHeight;
+              const centerPoint = [mapRect.width / 2, adjustedCenterY];
+
+              // Convert to lat/lng and pan to that position
+              const targetLatLng = map.containerPointToLatLng(centerPoint);
+              map.setView(
+                [
+                  event.event.coordinate?.latitude,
+                  event.event.coordinate?.longitude,
+                ],
+                map.getZoom(),
+                {
+                  animate: true,
+                  duration: 0.3,
+                }
+              );
+            }
+
+            const popupNode = e.popup.getElement();
+            const closeBtn = popupNode.querySelector(".popup-close");
+            if (closeBtn) {
+              closeBtn.addEventListener("click", () => {
+                map.closePopup();
               });
+            }
+
+            const zoomBtn = popupNode.querySelector(".popup-zoom-btn");
+            if (zoomBtn) {
+              zoomBtn.addEventListener("click", () => {
+                if (map) {
+                  map.flyTo(
+                    [
+                      event.event.coordinate?.latitude,
+                      event.event.coordinate?.longitude,
+                    ],
+                    16,
+                    {
+                      animate: true,
+                      duration: 2,
+                    }
+                  );
+                }
+              });
+            }
+          })
+          .on("click", () => {
+            if (map) {
+              map.flyTo(
+                [
+                  event.event.coordinate?.latitude,
+                  event.event.coordinate?.longitude,
+                ],
+                4,
+                {
+                  animate: true,
+                  duration: 1.5,
+                }
+              );
             }
           })
           .addTo(layerGroupRef.current);
@@ -188,7 +548,7 @@ const Map = () => {
         duration: 2,
       });
     }
-  }, [filter, isMapReady]);
+  }, [filter, isMapReady, upcomingEventData, pastEventData, resetMapTrigger]);
 
   return (
     <div className="map-view-container">
@@ -207,30 +567,83 @@ const Map = () => {
         </div>
       </div>
 
-      <div className="map-container">
-        <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
+      <div className="map-layout">
+        <div className="map-container">
+          <div ref={mapRef} className="map-area" />
 
-        <div className="map-legend">
-          <h3 className="map-legend-title">Filter Events</h3>
-          <div
-            className={`map-legend-item ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            All Events
+          <div className="map-legend-filter-container">
+            <h3 className="map-legend-title">Filter Events</h3>
+            <div
+              className={`map-legend-item ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              All Events
+            </div>
+            <div
+              className={`map-legend-item ${filter === "past" ? "active" : ""}`}
+              onClick={() => setFilter("past")}
+            >
+              {`Past Events (${pastEventData?.entries?.length || 0})`}
+            </div>
+            <div
+              className={`map-legend-item ${
+                filter === "upcoming" ? "active" : ""
+              }`}
+              onClick={() => setFilter("upcoming")}
+            >
+              {`Upcoming Events (${
+                upcomingEventData?.events_hosting?.length || 0
+              })`}
+            </div>
+            <button className="map-reset-btn" onClick={resetMapView}>
+              Reset Map View
+            </button>
           </div>
-          <div
-            className={`map-legend-item ${filter === "past" ? "active" : ""}`}
-            onClick={() => setFilter("past")}
-          >
-            Past Events
+        </div>
+
+        <div className="sidebar">
+          <div className="sidebar-header">
+            <div className="sidebar-logo">
+              <div className="logo-circle">
+                <img src="/ES-symbol.png" />
+              </div>
+            </div>
+            <div className="sidebar-title-section">
+              <h3 className="sidebar-brand">Espresso Systems</h3>
+              <h2 className="sidebar-title">
+                {filter === "all"
+                  ? "All Events"
+                  : filter === "past"
+                  ? "Past Events"
+                  : "Upcoming Events"}
+              </h2>
+            </div>
           </div>
-          <div
-            className={`map-legend-item ${
-              filter === "upcoming" ? "active" : ""
-            }`}
-            onClick={() => setFilter("upcoming")}
-          >
-            Upcoming Events
+
+          <div className="events-list">
+            {filteredEvents.map((event) => (
+              <div
+                key={event.id}
+                className="event-card"
+                onClick={() => handleEventCardClick(event)}
+              >
+                <div className="event-image">
+                  <img src={event.image} alt={event.title} />
+                </div>
+                <div className="event-content">
+                  <h4 className="event-title">{event.title}</h4>
+                  <div className="event-organizer">
+                    {/* <div className="organizer-avatars">{icons.location}</div> */}
+                    <div
+                      className="organizer-avatars"
+                      dangerouslySetInnerHTML={{ __html: icons.location }}
+                    ></div>
+                    <span className="organizer-text">{event.location}</span>
+                  </div>
+                  <p className="event-date">{event.date}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
