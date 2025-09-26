@@ -10,36 +10,25 @@ const Map = () => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const leafletLoadedRef = useRef(false);
-
   const layerGroupRef = useRef(null);
   const [filter, setFilter] = useState("all");
-
   const [sortBy, setSortBy] = useState("date");
   const [regionFilter, setRegionFilter] = useState("all");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
-
-  // Add these state variables to your existing Map component (after your existing states)
   const [userLocation, setUserLocation] = useState(null);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-
-  // Add search state
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Add loading states
   const [isLoadingUpcoming, setIsLoadingUpcoming] = useState(true);
   const [isLoadingPast, setIsLoadingPast] = useState(true);
-
-  // Combined loading state - true if either data source is still loading
   const isLoading = isLoadingUpcoming || isLoadingPast;
-
   const [upcomingEventData, setUpcomingEventData] = useState();
   const [pastEventData, setPastEventData] = useState();
   const [resetMapTrigger, setResetMapTrigger] = useState(0);
+  const [hostFilter, setHostFilter] = useState("all");
+  const filteredEvents = getFilteredAndSortedEvents();
+  const [isMapReady, setIsMapReady] = useState(false);
 
-  const [hostFilter, setHostFilter] = useState("all"); // Add this state
-
-  // Get unique hosts for filter dropdown
   const getUniqueHosts = () => {
     const allEvents = getAllEvents();
     const hosts = [
@@ -50,16 +39,6 @@ const Map = () => {
 
   const resetMapView = () => {
     setResetMapTrigger((prev) => prev + 1);
-  };
-
-  //////////
-  ////////////
-  ////////
-  const shouldShowEvent = (event) => {
-    if (!showNearbyOnly || !userLocation) return true;
-
-    const nearbyEvents = getNearbyEvents();
-    return nearbyEvents.some((nearbyEvent) => nearbyEvent.id === event.api_id);
   };
 
   const fetchDataUpcomingEvent = async () => {
@@ -81,21 +60,41 @@ const Map = () => {
     }
   };
 
-  useEffect(() => {
-    fetchDataUpcomingEvent();
-  }, []);
-
   const fetchDataPastEvent = async () => {
     try {
       setIsLoadingPast(true);
-      const res = await fetch(
+
+      const pastRes = await fetch(
         "/api/user/profile/events-hosting?pagination_cursor=evt-cqNTbzDjHZx4YJc&pagination_limit=40&period=past&user_api_id=usr-cAqsoa41hhkQxPs"
       );
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+
+      if (!pastRes.ok) {
+        throw new Error(`HTTP error! status: ${pastRes.status}`);
       }
-      const resdata = await res.json();
-      setPastEventData(resdata);
+
+      const pastData = await pastRes.json();
+
+      const pastEventsFromUpcoming = upcomingEventData?.events_past || [];
+      const pastEventsFromHosting = pastData?.entries || [];
+
+      const allPastEvents = [
+        ...pastEventsFromUpcoming,
+        ...pastEventsFromHosting,
+      ];
+      const uniquePastEvents = allPastEvents.reduce((unique, event) => {
+        const existingEvent = unique.find((e) => e.api_id === event.api_id);
+        if (!existingEvent) {
+          unique.push(event);
+        }
+        return unique;
+      }, []);
+
+      const mergedPastData = {
+        ...pastData,
+        entries: uniquePastEvents,
+      };
+
+      setPastEventData(mergedPastData);
     } catch (error) {
       console.error("Error fetching past events:", error);
     } finally {
@@ -104,11 +103,15 @@ const Map = () => {
   };
 
   useEffect(() => {
-    fetchDataPastEvent();
+    fetchDataUpcomingEvent();
   }, []);
 
-  // Combine both data sources for sidebar
-  // Fixed getAllEvents function
+  useEffect(() => {
+    if (upcomingEventData) {
+      fetchDataPastEvent();
+    }
+  }, [upcomingEventData]);
+
   const getAllEvents = () => {
     const upcomingEvents =
       upcomingEventData?.events_hosting?.map((event) => ({
@@ -116,16 +119,16 @@ const Map = () => {
         title: event.event.name,
         location: formatLocation(event.event.geo_address_info),
         date: formatReadableDate(event.start_at),
-        dateRaw: event.start_at, // Added
+        dateRaw: event.start_at,
         image: event.event?.cover_url,
         status: getEventStatus(event.start_at),
-        attendees: event.guest_count || 0, // Added
+        attendees: event.guest_count || 0,
         hosts: event.hosts || [],
         primaryHost: event.hosts?.[0]?.name || "Unknown",
         region:
           event.event.geo_address_info?.country ||
           event.event.geo_address_info?.city_state ||
-          "Unknown", // Added
+          "Unknown",
       })) || [];
 
     const pastEvents =
@@ -134,22 +137,21 @@ const Map = () => {
         title: event.event.name,
         location: formatLocation(event.event.geo_address_info),
         date: formatReadableDate(event.start_at),
-        dateRaw: event.start_at, // Added
+        dateRaw: event.start_at,
         image: event.event?.cover_url,
         status: getEventStatus(event.start_at),
-        attendees: event.guest_count || 0, // Added
+        attendees: event.guest_count || 0,
         hosts: event.hosts || [],
         primaryHost: event.hosts?.[0]?.name || "Unknown",
         region:
           event.event.geo_address_info?.country ||
           event.event.geo_address_info?.city_state ||
-          "Unknown", // Added
+          "Unknown",
       })) || [];
 
     return [...upcomingEvents, ...pastEvents];
   };
 
-  // Get unique regions for filter dropdown
   const getUniqueRegions = () => {
     const allEvents = getAllEvents();
     const regions = [...new Set(allEvents.map((event) => event.region))].filter(
@@ -157,14 +159,8 @@ const Map = () => {
     );
     return regions.sort();
   };
-
-  /////////////////
-  ////////////
-  //////////////
-
-  // Distance calculation function
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of Earth in kilometers
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
@@ -177,18 +173,15 @@ const Map = () => {
     return R * c;
   };
 
-  // Get events with distances and find closest 5
   const getNearbyEvents = () => {
     if (!userLocation) return [];
 
     const allEvents = getAllEvents();
     const eventsWithDistance = [];
 
-    // Calculate distances for events that have coordinates
     allEvents.forEach((event) => {
       let coordinates = null;
 
-      // Get coordinates from original data
       const upcomingEvent = upcomingEventData?.events_hosting?.find(
         (e) => e.api_id === event.id
       );
@@ -214,22 +207,18 @@ const Map = () => {
       }
     });
 
-    // Sort by distance and return top 5
     return eventsWithDistance
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 3);
   };
 
-  // Handle nearby events button click
   const handleNearbyEvents = () => {
     if (showNearbyOnly) {
-      // Turn off nearby mode
       setShowNearbyOnly(false);
       setUserLocation(null);
       return;
     }
 
-    // Get user location
     setIsGettingLocation(true);
 
     if (!navigator.geolocation) {
@@ -271,70 +260,6 @@ const Map = () => {
     );
   };
 
-  /////////
-  /////
-
-  // Apply filters and sorting
-  const getFilteredAndSortedEvents = () => {
-    let events = getAllEvents();
-
-    // If showing nearby only, get nearby events instead of all events
-    if (showNearbyOnly && userLocation) {
-      events = getNearbyEvents();
-    } else {
-      events = getAllEvents();
-    }
-
-    // Apply search filter first (case-insensitive)
-    if (searchQuery.trim()) {
-      events = events.filter((event) =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase().trim())
-      );
-    }
-
-    // Apply status filter
-    if (filter !== "all") {
-      events = events.filter((event) => event.status === filter);
-    }
-
-    // Apply region filter
-    if (regionFilter !== "all") {
-      events = events.filter((event) => event.region === regionFilter);
-    }
-
-    // Apply host filter
-    if (hostFilter !== "all") {
-      events = events.filter((event) => event.primaryHost === hostFilter);
-    }
-
-    // Fixed sorting with correct property names
-    switch (sortBy) {
-      case "date":
-        events = events.sort(
-          (a, b) => new Date(b.dateRaw) - new Date(a.dateRaw)
-        );
-        break;
-      case "attendees":
-        events = events.sort((a, b) => b.attendees - a.attendees);
-        break;
-      case "name":
-        events = events.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      default:
-        break;
-    }
-
-    return events;
-  };
-
-  const filteredEvents = getFilteredAndSortedEvents();
-
-  // const filteredEvents = getAllEvents().filter(
-  //   (event) => filter === "all" || event.status === filter
-  // );
-
-  const [isMapReady, setIsMapReady] = useState(false);
-
   const loadLeaflet = () => {
     return new Promise((resolve, reject) => {
       if (window.L && leafletLoadedRef.current) {
@@ -361,18 +286,13 @@ const Map = () => {
   const handleEventCardClick = (event) => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    // Find the event data to get coordinates
     let eventData = null;
-
-    // Check in upcoming events
     const upcomingEvent = upcomingEventData?.events_hosting?.find(
       (e) => e.api_id === event.id
     );
     if (upcomingEvent) {
       eventData = upcomingEvent;
     } else {
-      // Check in past events
       const pastEvent = pastEventData?.entries?.find(
         (e) => e.api_id === event.id
       );
@@ -401,16 +321,14 @@ const Map = () => {
             layer.openPopup();
           }
         });
-      }, 1000); // Delay to allow fly animation to complete
+      }, 1000);
     }
   };
 
-  // Clear search function
   const clearSearch = () => {
     setSearchQuery("");
   };
 
-  // Clear all filters and search
   const clearAllFiltersAndSearch = () => {
     setSortBy("date");
     setRegionFilter("all");
@@ -473,353 +391,172 @@ const Map = () => {
     const L = window.L;
     const map = mapInstanceRef.current;
 
-    upcomingEventData?.events_hosting
-      .filter((event) => {
-        const eventStatus = getEventStatus(event.start_at);
-        const eventRegion =
-          event.event.geo_address_info?.country ||
-          event.event.geo_address_info?.city_state ||
-          "Unknown";
+    let eventsToShowOnMap = [];
+
+    if (showNearbyOnly && userLocation) {
+      const nearbyEvents = getNearbyEvents();
+      eventsToShowOnMap = nearbyEvents;
+    } else {
+      const allEvents = getAllEvents();
+      eventsToShowOnMap = allEvents.filter((event) => {
+        const eventStatus = getEventStatus(event.dateRaw);
+        const eventRegion = event.region;
+        const eventHost = event.primaryHost;
 
         let statusMatch = filter === "all" || eventStatus === filter;
         let regionMatch =
           regionFilter === "all" || eventRegion === regionFilter;
+        let hostMatch = hostFilter === "all" || eventHost === hostFilter;
+        let searchMatch =
+          !searchQuery.trim() ||
+          event.title.toLowerCase().includes(searchQuery.toLowerCase().trim());
 
-        let nearbyMatch = shouldShowEvent(event);
-
-        return statusMatch && regionMatch && nearbyMatch; // Added region filtering
-      })
-      .forEach((event) => {
-        const lat = event.event.coordinate?.latitude;
-        const lng = event.event.coordinate?.longitude;
-
-        if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-          return;
-        }
-
-        const eventStatus = getEventStatus(event.start_at);
-        const icon = L.divIcon({
-          className: "custom-leaflet-icon",
-          html: `
-            <div class="marker-box ${eventStatus}">
-            ${icons.location}   
-            </div>
-      `,
-          iconSize: [80, 30],
-          iconAnchor: [40, 15],
-        });
-        const popupContent = `
-          <div class="popup-content">
-            <div class="popup-header">
-              <div class="popup-icon"><img src="/ES-symbol.png" /></div>
-              <div class="popup-header-text">
-                <div class="popup-title">${event.event.name}</div>
-                <div class="popup-country">
-                ${formatLocation(event.event.geo_address_info)}
-                </div>
-              </div>
-              <div class="popup-close">${icons.close}</div>
-            </div>
-            <div class="popup-body">
-              <div class="popup-date-section">
-                <div class="popup-date-icon">${icons.calendar}</div>
-                <div class="popup-date">${formatReadableDate(
-                  event.start_at
-                )}</div>
-              </div>
-              <div class="popup-attendees">
-                <div class="popup-attendees-icon">${icons.people}</div>
-                <div class="popup-attendees-text">${
-                  event.guest_count
-                } attendees</div>
-              </div>
-              
-              <div class="popup-link">
-                <div class="popup-link-icon">${icons.link}</div>
-                <a href="https://luma.com/${
-                  event.event.url
-                }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
-                Register
-                </a>
-              </div>
-              
-              <div class="popup-footer">
-                <div class="popup-status-badge status-${eventStatus}">
-                  ${
-                    eventStatus === "past"
-                      ? "COMPLETED EVENT"
-                      : "UPCOMING EVENT"
-                  }
-                </div>
-                <button class="popup-zoom-btn">
-                  Go to Location
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-        L.marker(
-          [event.event.coordinate.latitude, event.event.coordinate.longitude],
-          { icon }
-        )
-          .bindPopup(popupContent, {
-            className: "custom-popup",
-            maxWidth: 350,
-            closeButton: false,
-            autoPan: true, // Enable auto-panning
-            autoPanPadding: [50, 50], // Padding from screen edges
-            keepInView: true, // Keep popup in view
-            offset: [0, -10],
-          })
-          .on("popupopen", (e) => {
-            // Center the map on the marker when popup opens
-            const map = mapInstanceRef.current;
-            if (map) {
-              const mapContainer = map.getContainer();
-              const mapRect = mapContainer.getBoundingClientRect();
-              const headerHeight = 130; // Adjust based on your header height
-
-              // Calculate center point accounting for header
-              const adjustedCenterY =
-                (mapRect.height - headerHeight) / 2 + headerHeight;
-              const centerPoint = [mapRect.width / 2, adjustedCenterY];
-
-              // Convert to lat/lng and pan to that position
-              const targetLatLng = map.containerPointToLatLng(centerPoint);
-              map.setView(
-                [
-                  event.event.coordinate.latitude,
-                  event.event.coordinate.longitude,
-                ],
-                map.getZoom(),
-                {
-                  animate: true,
-                  duration: 0.3,
-                }
-              );
-            }
-
-            const popupNode = e.popup.getElement();
-            const closeBtn = popupNode.querySelector(".popup-close");
-            if (closeBtn) {
-              closeBtn.addEventListener("click", () => {
-                map.closePopup();
-              });
-            }
-
-            const zoomBtn = popupNode.querySelector(".popup-zoom-btn");
-            if (zoomBtn) {
-              zoomBtn.addEventListener("click", () => {
-                if (map) {
-                  map.flyTo(
-                    [
-                      event.event.coordinate.latitude,
-                      event.event.coordinate.longitude,
-                    ],
-                    16,
-                    {
-                      animate: true,
-                      duration: 2,
-                    }
-                  );
-                }
-              });
-            }
-          })
-          .on("click", () => {
-            if (map) {
-              map.flyTo(
-                [
-                  event.event.coordinate.latitude,
-                  event.event.coordinate.longitude,
-                ],
-                4,
-                {
-                  animate: true,
-                  duration: 1.5,
-                }
-              );
-            }
-          })
-          .addTo(layerGroupRef.current);
-      });
-
-    pastEventData?.entries
-      .filter((event) => {
-        const eventStatus = getEventStatus(event.start_at);
-        const eventRegion =
-          event.event.geo_address_info?.country ||
-          event.event.geo_address_info?.city_state ||
-          "Unknown";
-
-        let statusMatch = filter === "all" || eventStatus === filter;
-        let regionMatch =
-          regionFilter === "all" || eventRegion === regionFilter;
-
-        let nearbyMatch = shouldShowEvent(event);
-
-        return statusMatch && regionMatch && nearbyMatch; // Added region filtering
-      })
-      .forEach((event) => {
-        const lat = event.event.coordinate?.latitude;
-        const lng = event.event.coordinate?.longitude;
-
-        if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-          return;
-        }
-        const eventStatus = getEventStatus(event.start_at);
-        const icon = L.divIcon({
-          className: "custom-leaflet-icon",
-          html: `
-            <div class="marker-box ${eventStatus}">
-            ${icons.location}   
-            </div>
-      `,
-          iconSize: [80, 30],
-          iconAnchor: [40, 15],
-        });
-        const popupContent = `
-          <div class="popup-content">
-            <div class="popup-header">
-              <div class="popup-icon"><img src="/ES-symbol.png" /></div>
-              <div class="popup-header-text">
-                <div class="popup-title">${event.event.name}</div>
-                <div class="popup-country">
-                ${formatLocation(event.event.geo_address_info)}
-                </div>
-              </div>
-              <div class="popup-close">${icons.close}</div>
-            </div>
-            <div class="popup-body">
-              <div class="popup-date-section">
-                <div class="popup-date-icon">${icons.calendar}</div>
-                <div class="popup-date">${formatReadableDate(
-                  event.start_at
-                )}</div>
-              </div>
-              <div class="popup-attendees">
-                <div class="popup-attendees-icon">${icons.people}</div>
-                <div class="popup-attendees-text">${
-                  event.guest_count
-                } attendees</div>
-              </div>
-              
-              <div class="popup-link">
-                <div class="popup-link-icon">${icons.link}</div>
-                <a href="https://luma.com/${
-                  event.event.url
-                }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
-                Register
-                </a>
-              </div>
-              
-              <div class="popup-footer">
-                <div class="popup-status-badge status-${eventStatus}">
-                  ${
-                    eventStatus === "past"
-                      ? "COMPLETED EVENT"
-                      : "UPCOMING EVENT"
-                  }
-                </div>
-                <button class="popup-zoom-btn">
-                  Go to Location
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-        L.marker(
-          [event.event.coordinate?.latitude, event.event.coordinate?.longitude],
-          { icon }
-        )
-          .bindPopup(popupContent, {
-            className: "custom-popup",
-            maxWidth: 350,
-            closeButton: false,
-            autoPan: true, // Enable auto-panning
-            autoPanPadding: [50, 50], // Padding from screen edges
-            keepInView: true, // Keep popup in view
-            offset: [0, -10],
-          })
-          .on("popupopen", (e) => {
-            // Center the map on the marker when popup opens
-            const map = mapInstanceRef.current;
-            if (map) {
-              const mapContainer = map.getContainer();
-              const mapRect = mapContainer.getBoundingClientRect();
-              const headerHeight = 130; // Adjust based on your header height
-
-              // Calculate center point accounting for header
-              const adjustedCenterY =
-                (mapRect.height - headerHeight) / 2 + headerHeight;
-              const centerPoint = [mapRect.width / 2, adjustedCenterY];
-
-              // Convert to lat/lng and pan to that position
-              const targetLatLng = map.containerPointToLatLng(centerPoint);
-              map.setView(
-                [
-                  event.event.coordinate?.latitude,
-                  event.event.coordinate?.longitude,
-                ],
-                map.getZoom(),
-                {
-                  animate: true,
-                  duration: 0.3,
-                }
-              );
-            }
-
-            const popupNode = e.popup.getElement();
-            const closeBtn = popupNode.querySelector(".popup-close");
-            if (closeBtn) {
-              closeBtn.addEventListener("click", () => {
-                map.closePopup();
-              });
-            }
-
-            const zoomBtn = popupNode.querySelector(".popup-zoom-btn");
-            if (zoomBtn) {
-              zoomBtn.addEventListener("click", () => {
-                if (map) {
-                  map.flyTo(
-                    [
-                      event.event.coordinate?.latitude,
-                      event.event.coordinate?.longitude,
-                    ],
-                    16,
-                    {
-                      animate: true,
-                      duration: 2,
-                    }
-                  );
-                }
-              });
-            }
-          })
-          .on("click", () => {
-            if (map) {
-              map.flyTo(
-                [
-                  event.event.coordinate?.latitude,
-                  event.event.coordinate?.longitude,
-                ],
-                4,
-                {
-                  animate: true,
-                  duration: 1.5,
-                }
-              );
-            }
-          })
-          .addTo(layerGroupRef.current);
-      });
-
-    if (map) {
-      map.flyTo([20, 0], 2, {
-        animate: true,
-        duration: 2,
+        return statusMatch && regionMatch && hostMatch && searchMatch;
       });
     }
+
+    eventsToShowOnMap.forEach((event) => {
+      let eventData = null;
+      const upcomingEvent = upcomingEventData?.events_hosting?.find(
+        (e) => e.api_id === event.id
+      );
+      if (upcomingEvent) {
+        eventData = upcomingEvent;
+      } else {
+        const pastEvent = pastEventData?.entries?.find(
+          (e) => e.api_id === event.id
+        );
+        if (pastEvent) {
+          eventData = pastEvent;
+        }
+      }
+
+      if (!eventData || !eventData.event.coordinate) return;
+
+      const lat = eventData.event.coordinate?.latitude;
+      const lng = eventData.event.coordinate?.longitude;
+
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+        return;
+      }
+
+      const eventStatus = getEventStatus(eventData.start_at);
+      const icon = L.divIcon({
+        className: "custom-leaflet-icon",
+        html: `
+        <div class="marker-box ${eventStatus}">
+        ${icons.location}   
+        </div>
+  `,
+        iconSize: [80, 30],
+        iconAnchor: [40, 15],
+      });
+
+      const popupContent = `
+      <div class="popup-content">
+        <div class="popup-header">
+          <div class="popup-icon"><img src="/ES-symbol.png" /></div>
+          <div class="popup-header-text">
+            <div class="popup-title">${eventData.event.name}</div>
+            <div class="popup-country">
+            ${formatLocation(eventData.event.geo_address_info)}
+            </div>
+          </div>
+          <div class="popup-close">${icons.close}</div>
+        </div>
+        <div class="popup-body">
+          <div class="popup-date-section">
+            <div class="popup-date-icon">${icons.calendar}</div>
+            <div class="popup-date">${formatReadableDate(
+              eventData.start_at
+            )}</div>
+          </div>
+          <div class="popup-attendees">
+            <div class="popup-attendees-icon">${icons.people}</div>
+            <div class="popup-attendees-text">${
+              eventData.guest_count
+            } attendees</div>
+          </div>
+          
+          <div class="popup-link">
+            <div class="popup-link-icon">${icons.link}</div>
+            <a href="https://luma.com/${
+              eventData.event.url
+            }" target="_blank" rel="noopener noreferrer" class="popup-link-text">
+            Register
+            </a>
+          </div>
+          
+          <div class="popup-footer">
+            <div class="popup-status-badge status-${eventStatus}">
+              ${eventStatus === "past" ? "COMPLETED EVENT" : "UPCOMING EVENT"}
+            </div>
+            <button class="popup-zoom-btn">
+              Go to Location
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+      L.marker([lat, lng], { icon })
+        .bindPopup(popupContent, {
+          className: "custom-popup",
+          maxWidth: 350,
+          closeButton: false,
+          autoPan: true,
+          autoPanPadding: [50, 50],
+          keepInView: true,
+          offset: [0, -10],
+        })
+        .on("popupopen", (e) => {
+          const map = mapInstanceRef.current;
+          if (map) {
+            const mapContainer = map.getContainer();
+            const mapRect = mapContainer.getBoundingClientRect();
+            const headerHeight = 130;
+
+            const adjustedCenterY =
+              (mapRect.height - headerHeight) / 2 + headerHeight;
+            const centerPoint = [mapRect.width / 2, adjustedCenterY];
+
+            const targetLatLng = map.containerPointToLatLng(centerPoint);
+            map.setView([lat, lng], map.getZoom(), {
+              animate: true,
+              duration: 0.3,
+            });
+          }
+
+          const popupNode = e.popup.getElement();
+          const closeBtn = popupNode.querySelector(".popup-close");
+          if (closeBtn) {
+            closeBtn.addEventListener("click", () => {
+              map.closePopup();
+            });
+          }
+
+          const zoomBtn = popupNode.querySelector(".popup-zoom-btn");
+          if (zoomBtn) {
+            zoomBtn.addEventListener("click", () => {
+              if (map) {
+                map.flyTo([lat, lng], 16, {
+                  animate: true,
+                  duration: 2,
+                });
+              }
+            });
+          }
+        })
+        .on("click", () => {
+          if (map) {
+            map.flyTo([lat, lng], 4, {
+              animate: true,
+              duration: 1.5,
+            });
+          }
+        })
+        .addTo(layerGroupRef.current);
+    });
   }, [
     filter,
     regionFilter,
@@ -829,7 +566,18 @@ const Map = () => {
     upcomingEventData,
     pastEventData,
     resetMapTrigger,
+    showNearbyOnly,
+    userLocation,
   ]);
+
+  useEffect(() => {
+    if (resetMapTrigger && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([20, 0], 2, {
+        animate: true,
+        duration: 2,
+      });
+    }
+  }, [resetMapTrigger]);
 
   return (
     <div className="map-view-container">
@@ -899,9 +647,7 @@ const Map = () => {
             </div>
           </div>
 
-          {/* New Filter Controls */}
           <div className="sidebar-filters">
-            {/* Search Input */}
             <div className="search-container">
               <div className="search-input-wrapper">
                 <input
@@ -939,7 +685,6 @@ const Map = () => {
 
               {isFilterDropdownOpen && (
                 <div className="filter-dropdown-menu">
-                  {/* Sort Options */}
                   <div className="filter-section">
                     <h4 className="filter-section-title">Sort By</h4>
                     <div className="filter-options">
@@ -976,7 +721,6 @@ const Map = () => {
                     </div>
                   </div>
 
-                  {/* Region Filter */}
                   <div className="filter-section">
                     <h4 className="filter-section-title">Region</h4>
                     <div className="filter-options">
@@ -1005,7 +749,6 @@ const Map = () => {
                     </div>
                   </div>
 
-                  {/* Host Filter - NEW SECTION */}
                   <div className="filter-section">
                     <h4 className="filter-section-title">Hosted By</h4>
                     <div className="filter-options">
@@ -1034,7 +777,6 @@ const Map = () => {
                     </div>
                   </div>
 
-                  {/* Clear Filters */}
                   <div className="filter-section">
                     <button
                       className="clear-filters-btn"
@@ -1062,7 +804,6 @@ const Map = () => {
             </button>
           </div>
 
-          {/* Updated events list with skeleton loader */}
           {isLoading ? (
             <EventListSkeleton count={8} />
           ) : filteredEvents.length > 0 ? (
